@@ -1,0 +1,34 @@
+/* Estilos visuais, cores e os Temas (Claro/Escuro) */
+
+:root,
+[data-tema="claro"] {
+  --fundo: #f7f4ef;
+  --texto: #1f1a16;
+  --superficie: #ffffff;
+  --borda: #e4ddd4;
+  --destaque: #c45c26;
+}
+
+[data-tema="escuro"] {
+  --fundo: #161311;
+  --texto: #f4efe9;
+  --superficie: #221c18;
+  --borda: #3a322c;
+  --destaque: #e07a45;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  font-family: system-ui, sans-serif;
+  background: var(--fundo);
+  color: var(--texto);
+}
