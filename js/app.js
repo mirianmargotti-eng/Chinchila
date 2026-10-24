@@ -4,9 +4,15 @@ const App = {
   tela: "inicio",
   params: {},
   buscaMusicas: "",
+  buscaPastas: "",
+  buscaCelebracoes: "",
   pastaFiltro: "",
   tomAtual: "C",
   simularIndice: 0,
+  rolagemAtiva: false,
+  rolagemVelocidade: 1,
+  rolagemIntervalo: null,
+  tamanhoFontePalco: 16,
 
   iniciar() {
     this.aplicarTema(Banco.obterTema());
@@ -18,6 +24,7 @@ const App = {
   },
 
   irPara(tela, params = {}) {
+    if (this.tela === "simular" && tela !== "simular") this.pararRolagem();
     this.tela = tela;
     this.params = params;
     this.renderizar();
@@ -32,18 +39,26 @@ const App = {
     const raiz = document.getElementById("app");
     const perfil = Banco.obterPerfil();
     let titulo = "Início";
-    let criar = null;
+    let descricao = "Seu espaço para organizar músicas, cifras e repertórios.";
+    let acaoCriar = null;
+    let rotuloCriar = "";
     let html = "";
     let telaAtiva = this.tela;
+    let dadosPalco = null;
 
     if (this.tela === "inicio") {
       html = Componentes.telaInicio({
         recentes: Banco.listarCelebracoes().slice(0, 3),
         favoritas: Banco.listarMusicas({ apenasFixadas: true }),
+        totalMusicas: Banco.listarMusicas().length,
+        totalPastas: Banco.listarPastas().length,
+        totalCelebracoes: Banco.listarCelebracoes().length,
       });
     } else if (this.tela === "musicas") {
-      titulo = "Música";
-      criar = { acao: "nova-musica" };
+      titulo = "Músicas";
+      descricao = "Seu acervo pessoal de músicas e cifras.";
+      acaoCriar = "nova-musica";
+      rotuloCriar = "Nova música";
       html = Componentes.telaMusicas({
         musicas: Banco.listarMusicas({ busca: this.buscaMusicas, pasta_id: this.pastaFiltro || null }),
         pastas: Banco.listarPastas(),
@@ -51,7 +66,8 @@ const App = {
         pastaId: this.pastaFiltro,
       });
     } else if (this.tela === "musica-form") {
-      titulo = "Música";
+      titulo = this.params.id ? "Editar música" : "Nova música";
+      descricao = "Adicione ou atualize uma música do seu acervo.";
       telaAtiva = "musicas";
       html = Componentes.formularioMusica({
         musica: this.params.id ? Banco.obterMusica(this.params.id) : null,
@@ -60,7 +76,8 @@ const App = {
     } else if (this.tela === "cifra") {
       const musica = Banco.obterMusica(this.params.id);
       if (!musica) return this.irPara("musicas");
-      titulo = "Música";
+      titulo = "Cifra";
+      descricao = "Consulte e ajuste o tom da música.";
       telaAtiva = "musicas";
       html = Componentes.telaCifra({
         musica,
@@ -68,14 +85,21 @@ const App = {
         pastaNome: (Banco.obterPasta(musica.pasta_id) || {}).nome,
       });
     } else if (this.tela === "celebracoes") {
-      titulo = "Celebração";
-      criar = { acao: "nova-celebracao" };
+      titulo = "Repertórios";
+      descricao = "Monte sequências flexíveis para apresentações e eventos.";
+      acaoCriar = "nova-celebracao";
+      rotuloCriar = "Novo repertório";
       telaAtiva = "celebracoes";
-      html = Componentes.telaCelebracoes({ celebracoes: Banco.listarCelebracoes() });
+      html = Componentes.telaCelebracoes({
+        celebracoes: Banco.listarCelebracoes().filter((celebracao) =>
+          celebracao.titulo.toLowerCase().includes(this.buscaCelebracoes.trim().toLowerCase())
+        ),
+        busca: this.buscaCelebracoes,
+      });
     } else if (this.tela === "celebracao-form") {
-      titulo = "Celebração";
+      titulo = this.params.id ? "Editar repertório" : "Novo repertório";
+      descricao = "Organize os momentos e as músicas da sua sequência.";
       telaAtiva = "celebracoes";
-      criar = this.params.id ? { acao: "adicionar-item", extra: `data-id="${this.params.id}"` } : { acao: "nova-celebracao" };
       const celebracao = this.params.id ? Banco.obterCelebracao(this.params.id) : null;
       html = Componentes.formularioCelebracao({
         celebracao,
@@ -86,26 +110,101 @@ const App = {
     } else if (this.tela === "simular") {
       const celebracao = Banco.obterCelebracao(this.params.id);
       if (!celebracao) return this.irPara("celebracoes");
-      titulo = "Celebração";
+      const itens = Banco.listarItens(celebracao.id);
+      const item = itens[this.simularIndice] || null;
+      const musica = item ? Banco.obterMusica(item.musica_id) : null;
+      titulo = "Modo palco";
+      descricao = celebracao.titulo;
       telaAtiva = "celebracoes";
-      html = Componentes.telaSimular({
+      const cifra = musica
+        ? Componentes.transporCifra(musica.corpo_cifra, musica.tom_original, this.tomAtual) ||
+          "Esta música ainda não tem cifra cadastrada."
+        : "";
+      dadosPalco = {
         celebracao,
-        itens: Banco.listarItens(celebracao.id),
-        musicas: Banco.listarMusicas(),
+        item,
+        itens,
+        musica,
         indice: this.simularIndice,
         tomAtual: this.tomAtual,
-      });
+        corpo: Componentes.escapar(cifra),
+      };
     } else if (this.tela === "pastas") {
       titulo = "Pastas";
-      criar = { acao: "criar-pasta" };
+      descricao = "Organize suas músicas por categorias ou gêneros.";
+      acaoCriar = "criar-pasta";
+      rotuloCriar = "Nova pasta";
       const contagens = {};
       Banco.listarMusicas().forEach((m) => {
         if (m.pasta_id) contagens[m.pasta_id] = (contagens[m.pasta_id] || 0) + 1;
       });
-      html = Componentes.telaPastas({ pastas: Banco.listarPastas(), contagens });
+      html = Componentes.telaPastas({ pastas: Banco.listarPastas(), contagens, busca: this.buscaPastas });
+    } else if (this.tela === "configuracoes") {
+      titulo = "Configurações";
+      descricao = "Preferências da sua experiência no Chinchila.";
+      html = Componentes.telaConfiguracoes({
+        perfil,
+        tema: Banco.obterTema(),
+        momentos: Banco.momentosPadrao(),
+      });
+    } else if (this.tela === "acesso") {
+      titulo = "Acesso à conta";
+      descricao = "Prévia visual — autenticação ainda não disponível.";
+      telaAtiva = "configuracoes";
+      html = Componentes.telaAcesso();
     }
 
-    raiz.innerHTML = Componentes.layout({ telaAtiva, tituloBolha: titulo, criar, perfil, html });
+    if (dadosPalco) {
+      raiz.innerHTML = Componentes.layoutPalco(dadosPalco);
+      this.atualizarControlesPalco();
+    } else {
+      raiz.innerHTML = Componentes.layout({ telaAtiva, titulo, descricao, acaoCriar, rotuloCriar, perfil, html });
+    }
+  },
+
+  alternarRolagem() {
+    if (this.rolagemAtiva) {
+      this.pararRolagem();
+      return;
+    }
+    const area = document.querySelector(".palco-scroll-area");
+    if (!area) return;
+    this.rolagemAtiva = true;
+    this.atualizarControlesPalco();
+    this.rolagemIntervalo = window.setInterval(() => {
+      const scrollArea = document.querySelector(".palco-scroll-area");
+      if (!scrollArea) {
+        this.pararRolagem();
+        return;
+      }
+      scrollArea.scrollTop += this.rolagemVelocidade;
+      if (scrollArea.scrollTop + scrollArea.clientHeight >= scrollArea.scrollHeight) {
+        this.pararRolagem();
+      }
+    }, 50);
+  },
+
+  pararRolagem() {
+    this.rolagemAtiva = false;
+    if (this.rolagemIntervalo !== null) {
+      window.clearInterval(this.rolagemIntervalo);
+      this.rolagemIntervalo = null;
+    }
+    this.atualizarControlesPalco();
+  },
+
+  atualizarControlesPalco() {
+    const botao = document.querySelector('[data-acao="alternar-rolagem"]');
+    if (botao) {
+      botao.innerHTML = `${Componentes.icone(this.rolagemAtiva ? "pause" : "play")}<span>${this.rolagemAtiva ? "Pausar rolagem" : "Iniciar rolagem"}</span>`;
+      botao.classList.toggle("rolagem-ativa", this.rolagemAtiva);
+    }
+    const velocidade = document.querySelector(".palco-velocidade");
+    if (velocidade) velocidade.textContent = `${this.rolagemVelocidade}×`;
+    const tamanhoFonte = document.querySelector(".palco-fonte-tamanho");
+    if (tamanhoFonte) tamanhoFonte.textContent = `${this.tamanhoFontePalco}px`;
+    const cifra = document.querySelector(".palco-cifra");
+    if (cifra) cifra.style.fontSize = `${this.tamanhoFontePalco}px`;
   },
 
   tratarClique(evento) {
@@ -119,6 +218,22 @@ const App = {
       "alternar-tema": () => {
         this.aplicarTema(Banco.obterTema() === "claro" ? "escuro" : "claro");
         this.renderizar();
+      },
+      "sair-palco": () => this.irPara("celebracao-form", { id: this.params.id }),
+      "alternar-rolagem": () => this.alternarRolagem(),
+      "velocidade-rolagem": () => {
+        this.rolagemVelocidade = Math.max(
+          1,
+          Math.min(5, this.rolagemVelocidade + Number(alvo.dataset.delta))
+        );
+        this.atualizarControlesPalco();
+      },
+      "tamanho-fonte": () => {
+        this.tamanhoFontePalco = Math.max(
+          12,
+          Math.min(28, this.tamanhoFontePalco + Number(alvo.dataset.delta))
+        );
+        this.atualizarControlesPalco();
       },
       "editar-perfil": () => {
         const nome = prompt("Nome do perfil local:", Banco.obterPerfil().nome || "Gmail");
@@ -180,6 +295,7 @@ const App = {
         this.renderizar();
       },
       simular: () => {
+        this.pararRolagem();
         const itens = Banco.listarItens(id);
         const primeiro = itens.find((i) => i.musica_id);
         const musica = primeiro ? Banco.obterMusica(primeiro.musica_id) : null;
@@ -188,10 +304,13 @@ const App = {
         this.irPara("simular", { id });
       },
       "simular-ir": () => {
+        this.pararRolagem();
         this.simularIndice = Number(alvo.dataset.indice);
+        const areaPalco = document.querySelector(".palco-scroll-area");
+        if (areaPalco) areaPalco.scrollTop = 0;
         const item = Banco.listarItens(this.params.id)[this.simularIndice];
         const musica = item ? Banco.obterMusica(item.musica_id) : null;
-        this.tomAtual = musica ? musica.tom_original : this.tomAtual;
+        this.tomAtual = musica ? musica.tom_original : "C";
         this.renderizar();
       },
       transpor: () => {
@@ -262,11 +381,21 @@ const App = {
       this.buscaMusicas = String(dados.get("busca") || "");
       this.renderizar();
     }
+
+    if (form.dataset.acao === "filtrar-pastas") {
+      this.buscaPastas = String(dados.get("busca") || "");
+      this.renderizar();
+    }
+
+    if (form.dataset.acao === "filtrar-celebracoes") {
+      this.buscaCelebracoes = String(dados.get("busca") || "");
+      this.renderizar();
+    }
   },
 
   tratarChange(evento) {
     const select = evento.target;
-    if (select.matches(".filtro select")) {
+    if (select.matches(".filtro-select")) {
       this.pastaFiltro = select.value;
       this.renderizar();
     }
