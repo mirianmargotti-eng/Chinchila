@@ -56,7 +56,7 @@ const Componentes = {
       <div class="app-shell">
         <aside class="sidebar">
           <button class="marca" data-acao="navegar" data-tela="inicio" aria-label="Chinchila — início">
-            <span class="marca-icone">${this.icone("music")}</span>
+            <span class="marca-icone"><img src="assets/icons/logo_chinchila.svg" alt=""></span>
             <span class="marca-texto"><strong>Chinchila</strong><small>Sua música organizada</small></span>
           </button>
           <div class="menu-titulo">MENU PRINCIPAL</div>

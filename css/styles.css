@@ -121,14 +121,16 @@ textarea:focus-visible {
   height: 42px;
   display: grid;
   place-items: center;
-  border-radius: 14px;
-  background: var(--marca);
-  color: #fff;
+  flex: 0 0 42px;
 }
 
-.marca-icone .icone {
-  width: 21px;
-  height: 21px;
+.marca-icone img {
+  display: block;
+  border: 2px solid var(--texto);
+  border-radius: 14px;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 .marca-texto,
@@ -1965,6 +1967,7 @@ textarea:focus-visible {
   .marca-icone {
     width: 36px;
     height: 36px;
+    flex-basis: 36px;
   }
 
   .menu-titulo,
