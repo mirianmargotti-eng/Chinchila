@@ -8,6 +8,10 @@ const App = {
   buscaCelebracoes: "",
   pastaFiltro: "",
   tomAtual: "C",
+  agendaMes: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
+  agendaSelecionada: "",
+  dialogo: null,
+  executarDialogo: null,
   simularIndice: 0,
   rolagemAtiva: false,
   rolagemVelocidade: 1,
@@ -15,12 +19,16 @@ const App = {
   tamanhoFontePalco: 16,
 
   iniciar() {
+    this.agendaSelecionada = this.dataHojeISO();
     this.aplicarTema(Banco.obterTema());
     this.renderizar();
     document.getElementById("app").addEventListener("click", (evento) => this.tratarClique(evento));
     document.getElementById("app").addEventListener("submit", (evento) => this.tratarSubmit(evento));
     document.getElementById("app").addEventListener("change", (evento) => this.tratarChange(evento));
     document.getElementById("app").addEventListener("input", (evento) => this.tratarInput(evento));
+    document.getElementById("app").addEventListener("keydown", (evento) => {
+      if (evento.key === "Escape" && this.dialogo) this.fecharDialogo();
+    });
   },
 
   irPara(tela, params = {}) {
@@ -35,6 +43,82 @@ const App = {
     Banco.definirTema(tema);
   },
 
+  abrirDialogo(opcoes, executar) {
+    this.dialogo = opcoes;
+    this.executarDialogo = executar;
+    this.renderizar();
+    const entrada = document.querySelector(".dialogo-campo input");
+    const confirmar = document.querySelector(".dialogo-acoes button[type='submit']");
+    (entrada || confirmar)?.focus();
+  },
+
+  fecharDialogo() {
+    this.dialogo = null;
+    this.executarDialogo = null;
+    this.renderizar();
+  },
+
+  confirmarDialogo(valor) {
+    const executar = this.executarDialogo;
+    this.dialogo = null;
+    this.executarDialogo = null;
+    if (executar) executar(valor);
+    else this.renderizar();
+  },
+
+  dataISO(data) {
+    const ano = data.getFullYear();
+    const mes = String(data.getMonth() + 1).padStart(2, "0");
+    const dia = String(data.getDate()).padStart(2, "0");
+    return `${ano}-${mes}-${dia}`;
+  },
+
+  dataHojeISO() {
+    return this.dataISO(new Date());
+  },
+
+  proximosSeteDias(registros) {
+    const inicio = this.dataHojeISO();
+    const fim = new Date();
+    fim.setDate(fim.getDate() + 7);
+    const limite = this.dataISO(fim);
+    return registros
+      .filter((registro) => registro.data_evento >= inicio && registro.data_evento <= limite)
+      .sort((a, b) => a.data_evento.localeCompare(b.data_evento));
+  },
+
+  diasDoMesAgenda() {
+    const primeiroDia = new Date(this.agendaMes.getFullYear(), this.agendaMes.getMonth(), 1);
+    const deslocamento = (primeiroDia.getDay() + 6) % 7;
+    const inicio = new Date(primeiroDia);
+    inicio.setDate(primeiroDia.getDate() - deslocamento);
+    const repertoriosPorData = new Map();
+    const lembretesPorData = new Map();
+
+    Banco.listarCelebracoes().forEach((repertorio) => {
+      if (!repertoriosPorData.has(repertorio.data_evento)) repertoriosPorData.set(repertorio.data_evento, []);
+      repertoriosPorData.get(repertorio.data_evento).push(repertorio);
+    });
+    Banco.listarLembretes().forEach((lembrete) => {
+      if (!lembretesPorData.has(lembrete.data_evento)) lembretesPorData.set(lembrete.data_evento, []);
+      lembretesPorData.get(lembrete.data_evento).push(lembrete);
+    });
+
+    return Array.from({ length: 42 }, (_, indice) => {
+      const data = new Date(inicio);
+      data.setDate(inicio.getDate() + indice);
+      const chave = this.dataISO(data);
+      return {
+        data: chave,
+        numero: data.getDate(),
+        noMes: data.getMonth() === this.agendaMes.getMonth(),
+        hoje: chave === this.dataHojeISO(),
+        repertorios: repertoriosPorData.get(chave) || [],
+        lembretes: lembretesPorData.get(chave) || [],
+      };
+    });
+  },
+
   renderizar() {
     const raiz = document.getElementById("app");
     const perfil = Banco.obterPerfil();
@@ -47,8 +131,11 @@ const App = {
     let dadosPalco = null;
 
     if (this.tela === "inicio") {
+      const repertoriosProximos = this.proximosSeteDias(Banco.listarCelebracoes());
+      const lembretesProximos = this.proximosSeteDias(Banco.listarLembretes());
       html = Componentes.telaInicio({
-        recentes: Banco.listarCelebracoes().slice(0, 3),
+        proximosRepertorios: repertoriosProximos,
+        proximosLembretes: lembretesProximos,
         favoritas: Banco.listarMusicas({ apenasFixadas: true }),
         totalMusicas: Banco.listarMusicas().length,
         totalPastas: Banco.listarPastas().length,
@@ -106,6 +193,8 @@ const App = {
         itens: celebracao ? Banco.listarItens(celebracao.id) : [],
         musicas: Banco.listarMusicas(),
         momentos: Banco.momentosPadrao(),
+        dataInicial: this.params.data_evento,
+        retornoAgenda: Boolean(this.params.retornoAgenda),
       });
     } else if (this.tela === "simular") {
       const celebracao = Banco.obterCelebracao(this.params.id);
@@ -152,13 +241,38 @@ const App = {
       descricao = "Prévia visual — autenticação ainda não disponível.";
       telaAtiva = "configuracoes";
       html = Componentes.telaAcesso();
+    } else if (this.tela === "agenda") {
+      titulo = "Agenda";
+      descricao = "Acompanhe repertórios, eventos e lembretes em um só lugar.";
+      const ano = this.agendaMes.getFullYear();
+      const mes = this.agendaMes.getMonth();
+      const editorId = this.params.lembreteId;
+      html = Componentes.telaAgenda({
+        mes: {
+          rotulo: new Intl.DateTimeFormat("pt-BR", { month: "long", year: "numeric" }).format(this.agendaMes),
+        },
+        dias: this.diasDoMesAgenda(),
+        selecionada: this.agendaSelecionada,
+        repertorios: Banco.listarCelebracoes().filter((repertorio) => repertorio.data_evento === this.agendaSelecionada),
+        lembretes: Banco.listarLembretes().filter((lembrete) => lembrete.data_evento === this.agendaSelecionada),
+        editorLembrete: this.params.novoLembrete
+          ? {
+              ...(editorId ? Banco.obterLembrete(editorId) || {} : {}),
+              data_evento: editorId && Banco.obterLembrete(editorId)
+                ? Banco.obterLembrete(editorId).data_evento
+                : this.agendaSelecionada,
+            }
+          : null,
+      });
     }
 
     if (dadosPalco) {
       raiz.innerHTML = Componentes.layoutPalco(dadosPalco);
       this.atualizarControlesPalco();
     } else {
-      raiz.innerHTML = Componentes.layout({ telaAtiva, titulo, descricao, acaoCriar, rotuloCriar, perfil, html });
+      raiz.innerHTML =
+        Componentes.layout({ telaAtiva, titulo, descricao, acaoCriar, rotuloCriar, perfil, html }) +
+        (this.dialogo ? Componentes.dialogo(this.dialogo) : "");
     }
   },
 
@@ -208,13 +322,80 @@ const App = {
   },
 
   tratarClique(evento) {
+    if (evento.target.matches(".dialogo-fundo")) {
+      this.fecharDialogo();
+      return;
+    }
     const alvo = evento.target.closest("[data-acao]");
     if (!alvo) return;
     const acao = alvo.dataset.acao;
     const id = alvo.dataset.id;
 
     const acoes = {
+      "cancelar-dialogo": () => this.fecharDialogo(),
       navegar: () => this.irPara(alvo.dataset.tela),
+      "navegar-agenda-data": () => {
+        this.agendaSelecionada = alvo.dataset.data;
+        const [ano, mes] = this.agendaSelecionada.split("-").map(Number);
+        this.agendaMes = new Date(ano, mes - 1, 1);
+        this.irPara("agenda");
+      },
+      "agenda-selecionar-data": () => {
+        this.agendaSelecionada = alvo.dataset.data;
+        const [ano, mes] = this.agendaSelecionada.split("-").map(Number);
+        this.agendaMes = new Date(ano, mes - 1, 1);
+        this.irPara("agenda");
+      },
+      "agenda-mudar-mes": () => {
+        this.agendaMes = new Date(
+          this.agendaMes.getFullYear(),
+          this.agendaMes.getMonth() + Number(alvo.dataset.delta),
+          1
+        );
+        this.irPara("agenda");
+      },
+      "agenda-hoje": () => {
+        const hoje = new Date();
+        this.agendaMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+        this.agendaSelecionada = this.dataHojeISO();
+        this.irPara("agenda");
+      },
+      "agenda-criar-repertorio": () => {
+        this.irPara("celebracao-form", {
+          data_evento: this.agendaSelecionada,
+          retornoAgenda: true,
+        });
+      },
+      "agenda-novo-lembrete": () => this.irPara("agenda", { novoLembrete: true }),
+      "agenda-editar-lembrete": () => {
+        const lembrete = Banco.obterLembrete(id);
+        if (!lembrete) return;
+        this.agendaSelecionada = lembrete.data_evento;
+        const [ano, mes] = lembrete.data_evento.split("-").map(Number);
+        this.agendaMes = new Date(ano, mes - 1, 1);
+        this.irPara("agenda", { novoLembrete: true, lembreteId: lembrete.id });
+      },
+      "agenda-cancelar-lembrete": () => this.irPara("agenda"),
+      "agenda-apagar-lembrete": () => {
+        this.abrirDialogo({
+          titulo: "Apagar lembrete",
+          mensagem: "Este lembrete será removido permanentemente da sua agenda.",
+          confirmacao: "Apagar lembrete",
+          perigo: true,
+        }, () => {
+          Banco.apagarLembrete(id);
+          this.irPara("agenda");
+        });
+      },
+      "voltar-agenda": () => {
+        const repertorio = this.params.id ? Banco.obterCelebracao(this.params.id) : null;
+        this.agendaSelecionada = repertorio
+          ? repertorio.data_evento
+          : this.params.data_evento || this.agendaSelecionada;
+        const [ano, mes] = this.agendaSelecionada.split("-").map(Number);
+        this.agendaMes = new Date(ano, mes - 1, 1);
+        this.irPara("agenda");
+      },
       "alternar-tema": () => {
         this.aplicarTema(Banco.obterTema() === "claro" ? "escuro" : "claro");
         this.renderizar();
@@ -236,9 +417,17 @@ const App = {
         this.atualizarControlesPalco();
       },
       "editar-perfil": () => {
-        const nome = prompt("Nome do perfil local:", Banco.obterPerfil().nome || "Gmail");
-        if (nome) Banco.definirPerfil({ nome });
-        this.renderizar();
+        this.abrirDialogo({
+          titulo: "Editar perfil",
+          mensagem: "Escolha o nome que será exibido no seu perfil local.",
+          tipo: "entrada",
+          valorInicial: Banco.obterPerfil().nome || "",
+          placeholder: "Seu nome",
+          confirmacao: "Salvar nome",
+        }, (nome) => {
+          if (nome.trim()) Banco.definirPerfil({ nome: nome.trim() });
+          this.renderizar();
+        });
       },
       "abrir-celebracao": () => this.irPara("celebracao-form", { id }),
       "abrir-cifra": () => {
@@ -253,17 +442,28 @@ const App = {
         this.renderizar();
       },
       "apagar-musica": () => {
-        if (confirm("Apagar esta música do acervo local?")) {
+        const musica = Banco.obterMusica(id);
+        this.abrirDialogo({
+          titulo: "Apagar música",
+          mensagem: `A música “${musica ? musica.titulo : "selecionada"}” será removida do acervo local.`,
+          confirmacao: "Apagar música",
+          perigo: true,
+        }, () => {
           Banco.apagarMusica(id);
           this.renderizar();
-        }
+        });
       },
       "nova-celebracao": () => this.irPara("celebracao-form"),
       "apagar-celebracao": () => {
-        if (confirm("Apagar este roteiro? Ele deixa de ficar disponível para reutilização.")) {
+        this.abrirDialogo({
+          titulo: "Apagar repertório",
+          mensagem: "Este repertório e sua sequência deixarão de ficar disponíveis.",
+          confirmacao: "Apagar repertório",
+          perigo: true,
+        }, () => {
           Banco.apagarCelebracao(id);
           this.renderizar();
-        }
+        });
       },
       "adicionar-item": () => {
         const celebracaoId = id || this.params.id;
@@ -279,8 +479,15 @@ const App = {
         this.irPara("celebracao-form", { id: celebracaoId });
       },
       "apagar-item": () => {
-        Banco.apagarItem(id);
-        this.renderizar();
+        this.abrirDialogo({
+          titulo: "Apagar momento",
+          mensagem: "Este momento será removido da sequência do repertório.",
+          confirmacao: "Apagar momento",
+          perigo: true,
+        }, () => {
+          Banco.apagarItem(id);
+          this.irPara("celebracao-form", { id: this.params.id });
+        });
       },
       "mover-item": () => {
         const dir = Number(alvo.dataset.dir);
@@ -321,21 +528,41 @@ const App = {
         this.renderizar();
       },
       "criar-pasta": () => {
-        const nome = prompt("Nome da pasta (ex: Pop, Sertanejo, Internacional):");
-        if (nome && nome.trim()) Banco.criarPasta(nome);
-        this.irPara("pastas");
+        this.abrirDialogo({
+          titulo: "Criar pasta",
+          mensagem: "Dê um nome para organizar suas músicas.",
+          tipo: "entrada",
+          placeholder: "Ex.: Pop, Sertanejo",
+          confirmacao: "Criar pasta",
+        }, (nome) => {
+          if (nome.trim()) Banco.criarPasta(nome.trim());
+          this.irPara("pastas");
+        });
       },
       "renomear-pasta": () => {
         const pasta = Banco.obterPasta(id);
-        const nome = prompt("Novo nome da pasta:", pasta ? pasta.nome : "");
-        if (nome && nome.trim()) Banco.atualizarPasta(id, nome);
-        this.renderizar();
+        this.abrirDialogo({
+          titulo: "Renomear pasta",
+          mensagem: "Digite o novo nome para esta pasta.",
+          tipo: "entrada",
+          valorInicial: pasta ? pasta.nome : "",
+          placeholder: "Nome da pasta",
+          confirmacao: "Salvar nome",
+        }, (nome) => {
+          if (nome.trim()) Banco.atualizarPasta(id, nome.trim());
+          this.renderizar();
+        });
       },
       "apagar-pasta": () => {
-        if (confirm("Apagar pasta? As músicas ficam sem pasta, não são excluídas.")) {
+        this.abrirDialogo({
+          titulo: "Apagar pasta",
+          mensagem: "As músicas desta pasta não serão excluídas; elas ficarão sem pasta.",
+          confirmacao: "Apagar pasta",
+          perigo: true,
+        }, () => {
           Banco.apagarPasta(id);
           this.renderizar();
-        }
+        });
       },
       "abrir-pasta": () => {
         this.pastaFiltro = String(id);
@@ -354,6 +581,11 @@ const App = {
     if (!form) return;
     evento.preventDefault();
     const dados = new FormData(form);
+
+    if (form.dataset.acao === "confirmar-dialogo") {
+      this.confirmarDialogo(String(dados.get("valor") || ""));
+      return;
+    }
 
     if (form.dataset.acao === "salvar-musica") {
       Banco.salvarMusica({
@@ -374,7 +606,22 @@ const App = {
         titulo: dados.get("titulo"),
         data_evento: dados.get("data_evento"),
       });
-      this.irPara("celebracao-form", { id: salva.id });
+      const retornoAgenda = dados.get("retorno_agenda") === "true";
+      if (retornoAgenda) this.agendaSelecionada = salva.data_evento;
+      this.irPara("celebracao-form", { id: salva.id, retornoAgenda });
+    }
+
+    if (form.dataset.acao === "agenda-salvar-lembrete") {
+      const lembrete = Banco.salvarLembrete({
+        id: dados.get("id"),
+        titulo: dados.get("titulo"),
+        descricao: dados.get("descricao"),
+        data_evento: dados.get("data_evento"),
+      });
+      this.agendaSelecionada = lembrete.data_evento;
+      const [ano, mes] = this.agendaSelecionada.split("-").map(Number);
+      this.agendaMes = new Date(ano, mes - 1, 1);
+      this.irPara("agenda");
     }
 
     if (form.dataset.acao === "filtrar-musicas") {

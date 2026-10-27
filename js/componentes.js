@@ -22,6 +22,7 @@ const Componentes = {
       pause: '<path d="M8 5h3v14H8zM15 5h3v14h-3z"/>',
       calendar: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 11h18"/>',
       sparkle: '<path d="m12 3 1.9 5.8L20 11l-6.1 2.2L12 19l-1.9-5.8L4 11l6.1-2.2z"/><path d="m19 14 1.1 2.9L23 18l-2.9 1.1L19 22l-1.1-2.9L15 18l2.9-1.1z"/>',
+      info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v5m0-8h.01"/>',
       more: '<circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/>',
       close: '<path d="m18 6-12 12M6 6l12 12"/>',
     };
@@ -34,6 +35,7 @@ const Componentes = {
       { id: "musicas", rotulo: "Músicas", icone: "music" },
       { id: "pastas", rotulo: "Pastas", icone: "folder" },
       { id: "celebracoes", rotulo: "Repertórios", icone: "list" },
+      { id: "agenda", rotulo: "Agenda", icone: "calendar" },
       { id: "configuracoes", rotulo: "Configurações", icone: "settings" },
     ];
     const nav = links
@@ -88,6 +90,26 @@ const Componentes = {
           </header>
           <div class="pagina">${html}</div>
         </main>
+      </div>
+    `;
+  },
+
+  dialogo({ titulo, mensagem, tipo, valorInicial, placeholder, confirmacao, perigo }) {
+    const entrada = tipo === "entrada";
+    return `
+      <div class="dialogo-fundo">
+        <section class="dialogo-painel" role="dialog" aria-modal="true" aria-labelledby="dialogo-titulo" aria-describedby="dialogo-mensagem">
+          <div class="dialogo-icone ${perigo ? "perigo" : ""}">${this.icone(perigo ? "trash" : entrada ? "edit" : "info")}</div>
+          <h2 id="dialogo-titulo">${this.escapar(titulo)}</h2>
+          <p id="dialogo-mensagem">${this.escapar(mensagem)}</p>
+          <form data-acao="confirmar-dialogo">
+            ${entrada ? `<label class="dialogo-campo"><span>Nome</span><input name="valor" required maxlength="160" value="${this.escapar(valorInicial || "")}" placeholder="${this.escapar(placeholder || "")}"></label>` : ""}
+            <div class="dialogo-acoes">
+              <button type="button" class="botao contorno" data-acao="cancelar-dialogo">Cancelar</button>
+              <button type="submit" class="botao ${perigo ? "perigo" : "primario"}">${this.escapar(confirmacao || (entrada ? "Salvar" : "Confirmar"))}</button>
+            </div>
+          </form>
+        </section>
       </div>
     `;
   },
@@ -167,13 +189,17 @@ const Componentes = {
     `;
   },
 
-  telaInicio({ recentes, favoritas, totalMusicas, totalPastas, totalCelebracoes }) {
-    const ultimos = recentes
+  telaInicio({ proximosRepertorios, proximosLembretes, favoritas, totalMusicas, totalPastas, totalCelebracoes }) {
+    const agendaProxima = [
+      ...proximosRepertorios.map((roteiro) => ({ ...roteiro, tipo: "repertorio" })),
+      ...proximosLembretes.map((lembrete) => ({ ...lembrete, tipo: "lembrete" })),
+    ]
+      .sort((a, b) => a.data_evento.localeCompare(b.data_evento))
       .map(
-        (roteiro) => `
-          <button class="recente-item" data-acao="abrir-celebracao" data-id="${roteiro.id}">
-            <span class="item-icone">${this.icone("list")}</span>
-            <span class="item-detalhe"><strong>${this.escapar(roteiro.titulo)}</strong><small>${this.formatarData(roteiro.data_evento)}</small></span>
+        (evento) => `
+          <button class="agenda-resumo-item ${evento.tipo}" data-acao="${evento.tipo === "repertorio" ? "abrir-celebracao" : "navegar-agenda-data"}" ${evento.tipo === "repertorio" ? `data-id="${evento.id}"` : `data-data="${this.escapar(evento.data_evento)}"`}>
+            <span class="agenda-resumo-icone">${this.icone(evento.tipo === "repertorio" ? "list" : "sparkle")}</span>
+            <span class="item-detalhe"><strong>${this.escapar(evento.titulo)}</strong><small>${this.formatarData(evento.data_evento)}${evento.tipo === "repertorio" ? ` · ${this.contagemRegressiva(evento.data_evento)}` : evento.descricao ? ` · ${this.escapar(evento.descricao)}` : " · Lembrete"}</small></span>
             ${this.icone("chevron")}
           </button>`
       )
@@ -200,14 +226,114 @@ const Componentes = {
         <article class="resumo-card"><span class="resumo-icone verde">${this.icone("list")}</span><span><small>Repertórios</small><strong>${totalCelebracoes}</strong></span></article>
       </section>
       <section class="painel">
-        <div class="secao-cabecalho"><div><h2>Repertórios recentes</h2><p>Continue de onde você parou.</p></div><button class="link-botao" data-acao="navegar" data-tela="celebracoes">Ver repertórios ${this.icone("chevron")}</button></div>
-        <div class="itens-lista">${ultimos || this.estadoVazio("calendar", "Nenhum repertório por aqui", "Crie um repertório para organizar as músicas de uma apresentação.")}</div>
+        <div class="secao-cabecalho"><div><h2>Agenda desta semana</h2><p>Seus repertórios e lembretes nos próximos 7 dias.</p></div><button class="link-botao" data-acao="navegar" data-tela="agenda">Abrir agenda ${this.icone("chevron")}</button></div>
+        <div class="itens-lista agenda-resumo-lista">${agendaProxima || this.estadoVazio("calendar", "Nenhum evento nos próximos 7 dias", "Seus repertórios e lembretes próximos aparecerão aqui.")}</div>
       </section>
       <section class="painel">
         <div class="secao-cabecalho"><div><h2>Músicas favoritas</h2><p>Acesse rapidamente as cifras que você marcou.</p></div><button class="link-botao" data-acao="navegar" data-tela="musicas">Abrir biblioteca ${this.icone("chevron")}</button></div>
         <div class="itens-lista">${favoritosHtml || this.estadoVazio("star", "Suas favoritas aparecerão aqui", "Marque uma música com a estrela para encontrá-la rapidamente.")}</div>
       </section>
     `;
+  },
+
+  telaAgenda({ mes, dias, selecionada, repertorios, lembretes, editorLembrete }) {
+    const nomesDias = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
+    const cabecalho = nomesDias.map((nome) => `<span>${nome}</span>`).join("");
+    const celulas = dias
+      .map((dia) => {
+        const marcadores = [
+          ...dia.repertorios.slice(0, 3).map(() => '<i class="agenda-marcador repertorio"></i>'),
+          ...dia.lembretes.slice(0, 3).map(() => '<i class="agenda-marcador lembrete"></i>'),
+        ].join("");
+        const classes = [
+          "agenda-dia",
+          dia.noMes ? "" : "fora-mes",
+          dia.data === selecionada ? "selecionado" : "",
+          dia.hoje ? "hoje" : "",
+          dia.repertorios.length || dia.lembretes.length ? "com-eventos" : "",
+        ].filter(Boolean).join(" ");
+        return `
+          <button class="${classes}" data-acao="agenda-selecionar-data" data-data="${dia.data}" aria-label="${this.formatarData(dia.data)}${dia.repertorios.length ? `, ${dia.repertorios.length} ${dia.repertorios.length === 1 ? "repertório" : "repertórios"}` : ""}${dia.lembretes.length ? `, ${dia.lembretes.length} ${dia.lembretes.length === 1 ? "lembrete" : "lembretes"}` : ""}" aria-pressed="${dia.data === selecionada}">
+            <span class="agenda-dia-numero">${dia.numero}</span><span class="agenda-marcadores">${marcadores}</span>
+          </button>`;
+      })
+      .join("");
+    const repertoriosHtml = repertorios
+      .map(
+        (repertorio) => `
+          <article class="agenda-evento repertorio">
+            <span class="agenda-evento-icone">${this.icone("list")}</span>
+            <button class="agenda-evento-detalhe" data-acao="abrir-celebracao" data-id="${repertorio.id}"><strong>${this.escapar(repertorio.titulo)}</strong><small>Repertório agendado</small></button>
+            <button class="botao-icone" data-acao="abrir-celebracao" data-id="${repertorio.id}" aria-label="Abrir repertório ${this.escapar(repertorio.titulo)}">${this.icone("chevron")}</button>
+          </article>`
+      )
+      .join("");
+    const lembretesHtml = lembretes
+      .map(
+        (lembrete) => `
+          <article class="agenda-evento lembrete">
+            <span class="agenda-evento-icone">${this.icone("sparkle")}</span>
+            <button class="agenda-evento-detalhe" data-acao="agenda-editar-lembrete" data-id="${lembrete.id}"><strong>${this.escapar(lembrete.titulo)}</strong><small>${this.escapar(lembrete.descricao || "Lembrete")}</small></button>
+            <button class="botao-icone" data-acao="agenda-editar-lembrete" data-id="${lembrete.id}" aria-label="Editar lembrete ${this.escapar(lembrete.titulo)}">${this.icone("edit")}</button>
+            <button class="botao-icone perigo" data-acao="agenda-apagar-lembrete" data-id="${lembrete.id}" aria-label="Apagar lembrete ${this.escapar(lembrete.titulo)}">${this.icone("trash")}</button>
+          </article>`
+      )
+      .join("");
+    const formLembrete = editorLembrete
+      ? `
+        <form class="agenda-form-lembrete" data-acao="agenda-salvar-lembrete">
+          <input type="hidden" name="id" value="${editorLembrete.id || ""}">
+          <label>Título do lembrete<input name="titulo" required maxlength="160" value="${this.escapar(editorLembrete.titulo || "")}" placeholder="Ex.: Revisar cifra"></label>
+          <label>Data<input name="data_evento" type="date" required value="${this.escapar(editorLembrete.data_evento || selecionada)}"></label>
+          <label>Observação (opcional)<textarea name="descricao" rows="3" maxlength="500" placeholder="Anote um detalhe importante...">${this.escapar(editorLembrete.descricao || "")}</textarea></label>
+          <div class="acoes-form"><button type="button" class="botao secundario" data-acao="agenda-cancelar-lembrete">Cancelar</button><button type="submit" class="botao primario">Salvar lembrete</button></div>
+        </form>`
+      : "";
+
+    return `
+      <section class="agenda-layout">
+        <div class="painel agenda-calendario">
+          <header class="agenda-calendario-topo">
+            <div><span class="sobrelinha">CALENDÁRIO MENSAL</span><h2>${this.escapar(mes.rotulo)}</h2></div>
+            <div class="agenda-navegacao">
+              <button class="botao contorno agenda-hoje" data-acao="agenda-hoje">Hoje</button>
+              <button class="botao-icone contorno" data-acao="agenda-mudar-mes" data-delta="-1" aria-label="Mês anterior" title="Mês anterior">${this.icone("arrowLeft")}</button>
+              <button class="botao-icone contorno agenda-proximo-mes" data-acao="agenda-mudar-mes" data-delta="1" aria-label="Próximo mês" title="Próximo mês">${this.icone("arrowLeft")}</button>
+            </div>
+          </header>
+          <div class="agenda-grade">
+            <div class="agenda-dias-semana">${cabecalho}</div>
+            <div class="agenda-dias">${celulas}</div>
+          </div>
+          <div class="agenda-legenda"><span><i class="agenda-marcador repertorio"></i> Repertório</span><span><i class="agenda-marcador lembrete"></i> Lembrete</span></div>
+        </div>
+        <aside class="painel agenda-dia-painel">
+          <header class="agenda-selecionada-topo"><span class="sobrelinha">DIA SELECIONADO</span><h2>${this.escapar(this.formatarData(selecionada))}</h2><p>Os repertórios são sincronizados automaticamente com a data marcada.</p></header>
+          <div class="agenda-acoes">
+            <button class="botao primario" data-acao="agenda-criar-repertorio">${this.icone("plus")} Criar repertório</button>
+            <button class="botao contorno" data-acao="agenda-novo-lembrete">${this.icone("sparkle")} Novo lembrete</button>
+          </div>
+          ${formLembrete}
+          <div class="agenda-eventos">
+            <h3>Repertórios</h3>
+            ${repertoriosHtml || `<p class="agenda-vazio">Nenhum repertório nesta data.</p>`}
+            <h3>Lembretes e anotações</h3>
+            ${lembretesHtml || (editorLembrete ? "" : `<p class="agenda-vazio">Nenhum lembrete nesta data.</p>`)}
+          </div>
+        </aside>
+      </section>
+    `;
+  },
+
+  contagemRegressiva(data) {
+    const hoje = new Date();
+    const hojeUTC = Date.UTC(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
+    const partes = String(data).split("-").map(Number);
+    const diaUTC = Date.UTC(partes[0], partes[1] - 1, partes[2]);
+    const dias = Math.round((diaUTC - hojeUTC) / 86400000);
+    if (dias === 0) return "Hoje";
+    if (dias === 1) return "Amanhã";
+    return `Faltam ${dias} dias`;
   },
 
   telaMusicas({ musicas, pastas, busca, pastaId }) {
@@ -320,8 +446,10 @@ const Componentes = {
     `;
   },
 
-  formularioCelebracao({ celebracao, itens, musicas, momentos }) {
-    const c = celebracao || { titulo: "", data_evento: new Date().toISOString().slice(0, 10) };
+  formularioCelebracao({ celebracao, itens, musicas, momentos, dataInicial, retornoAgenda }) {
+    const hoje = new Date();
+    const hojeISO = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, "0")}-${String(hoje.getDate()).padStart(2, "0")}`;
+    const c = celebracao || { titulo: "", data_evento: dataInicial || hojeISO };
     const sugestoes = momentos.map((nome) => `<option value="${this.escapar(nome)}"></option>`).join("");
     const musicasOpcoes = (selecionada) =>
       [`<option value="">Sem música</option>`]
@@ -354,12 +482,13 @@ const Componentes = {
       <section class="painel formulario-painel">
         <form class="formulario" data-acao="salvar-celebracao">
           <input type="hidden" name="id" value="${c.id || ""}">
+          <input type="hidden" name="retorno_agenda" value="${retornoAgenda ? "true" : "false"}">
           <div class="campos-duplos">
             <label class="campo-largo">Nome do repertório<input name="titulo" required maxlength="160" value="${this.escapar(c.titulo)}" placeholder="Ex.: Apresentação de sábado"></label>
             <label>Data do evento<input type="date" name="data_evento" value="${this.escapar(c.data_evento)}"></label>
           </div>
           <div class="acoes-form">
-            <button type="button" class="botao secundario" data-acao="navegar" data-tela="celebracoes">Voltar</button>
+            ${retornoAgenda ? `<button type="button" class="botao secundario" data-acao="voltar-agenda">${this.icone("arrowLeft")} Voltar à agenda</button>` : `<button type="button" class="botao secundario" data-acao="navegar" data-tela="celebracoes">Voltar</button>`}
             <button type="submit" class="botao primario">Salvar repertório</button>
             ${c.id ? `<button type="button" class="botao contorno" data-acao="simular" data-id="${c.id}">${this.icone("play")} Modo palco</button>` : ""}
           </div>
