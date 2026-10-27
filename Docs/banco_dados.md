@@ -65,6 +65,16 @@ Tabela associativa que define a ordem das músicas e os momentos customizáveis 
 
 Se uma música for excluída, os itens de repertório deixam de apontar para ela (`musica_id` fica nulo), mas o momento, a ordem e as observações são preservados. Assim, excluir a música não apaga nem desestrutura o repertório.
 
+## 6. Tabela: `lembretes`
+Armazena anotações e lembretes associados a uma data da agenda. Repertórios não são duplicados nesta tabela: sua própria `data_evento` os vincula automaticamente ao calendário.
+
+| Campo | Tipo | Descrição |
+| :--- | :--- | :--- |
+| `id` | INTEGER (PK) | Identificador único do lembrete. |
+| `titulo` | TEXT NOT NULL | Título ou anotação curta do lembrete. |
+| `descricao` | TEXT NULL | Observação opcional. |
+| `data_evento` | DATE NOT NULL | Data em que o lembrete aparece na agenda. |
+
 ## Campos obrigatórios
 
 - Música: somente `titulo`.

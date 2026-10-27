@@ -7,6 +7,7 @@ O **Chinchila** é um aplicativo focado na organização e execução de repert�
 *   **Conta identificada por email:** O email dará acesso à conta, mas não será o armazenamento dos dados. A conta deverá manter um identificador próprio para permitir trocar o email sem perder o acervo.
 *   **Organização por Pastas:** Separação limpa de músicas por géneros, categorias ou preferências para evitar misturar repertórios distintos.
 *   **Roteiros Flexíveis e Reutilizáveis:** Criação de sequências de execução onde qualquer evento pode ser editado, adaptado ou duplicado para a semana seguinte.
+*   **Agenda mensal:** Calendário local com repertórios vinculados às datas dos eventos, anotações e lembretes; os repertórios dos próximos sete dias aparecem no início.
 *   **Momentos Customizáveis:** Blocos de execução totalmente editáveis pelo utilizador para se adaptar tanto a missas (Entrada da Bíblia) quanto a shows (Bloco Noite, Bloco Tarde).
 *   **Modo Simular (Imersivo):** Interface limpa em ecrã inteiro para o momento da execução, com rolagem automática inteligente e transposição de tom.
 *   **Tema Claro e Escuro:** Interface clara por padrão, com alternância para o Modo Escuro disponível nas telas principais.
