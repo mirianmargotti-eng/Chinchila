@@ -2,6 +2,8 @@
 
 O aplicativo oferece telas de início, músicas, pastas, repertórios, agenda e configurações, além de uma interface de execução imersiva.
 
+Na barra lateral, as telas são agrupadas por área: Principal, Módulo Música (Músicas, Pastas e Repertórios), Agenda e Preferências.
+
 ## 1. Tela de Início (Painel de Controle)
 *   **Interruptor de Tema:** Pequeno botão discreto na barra superior com os símbolos gráficos do sol e da lua para alternar entre Modo Claro (padrão) e Modo Escuro.
 *   **Botão de Ação Principal:** `[+] Novo Roteiro` (cria uma sequência de músicas em branco).
@@ -25,14 +27,18 @@ O aplicativo oferece telas de início, músicas, pastas, repertórios, agenda e 
 
 ## 4. Tela de Músicas (O Grande Acervo)
 *   **Lista Geral:** Exibição de todas as músicas salvas na memória local.
+*   **Paginação:** Exibe até 6 músicas por página para manter a lista compacta e facilitar a navegação em acervos grandes.
 *   **Filtros Rápidos:** 
     *   Busca por texto no título ou autor.
     *   Filtro rápido por pasta ativa.
     *   A busca e o filtro por pasta devem refletir as associações: uma música pode aparecer em várias pastas.
 *   **Exclusão de música:** Remove a música e seus vínculos com pastas e repertórios. Nos repertórios, preserva o momento, a ordem e as observações, deixando o espaço sem música associada.
+*   **Clonar música:** Cria uma cópia editável com os dados e o texto integral da cifra.
+*   **Importar cifra:** Aceita um PDF local ou um link público de página/PDF. A importação reconstrói o espaçamento horizontal pelos posicionamentos no PDF para manter os acordes sobre a letra. PDF escaneado exige OCR (ainda indisponível), e a importação de links depende das permissões CORS do site.
+*   **Consultar cifra:** Inclui metrônomo ajustável, controle visual de instrumento e afinador em breve (com comportamento que varia conforme o instrumento), impressão e exportação para PDF pela janela de impressão do navegador.
 *   **Interface de Cadastro `[+]`:**
-    *   *Aba Importar:* Campo para colar o link externo e extrair a cifra de forma automatizada (apenas online).
-    *   *Aba Manual:* Editor de texto limpo com fonte monoespaçada (`Courier New`) para garantir que os acordes digitados fiquem alinhados com as palavras.
+    *   Editor de texto limpo com fonte monoespaçada (`Courier New`) para garantir que os acordes digitados fiquem alinhados com as palavras.
+    *   Após importar, o conteúdo é aberto para revisão antes de ser salvo.
 
 ## 5. Tela de Configurações (Nova)
 *   **Gestão de Momentos Padrão:** Permite ao utilizador registar e editar novos nomes de momentos recorrentes (ex: adicionar "Entrada da Bíblia", "Momento de Oração", "Bloco da Tarde") para estarem sempre disponíveis ao montar um roteiro.
