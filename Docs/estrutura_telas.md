@@ -36,7 +36,7 @@ Na barra lateral, as telas são agrupadas por área: Principal, Módulo Música 
 *   **Exclusão de música:** Remove a música e seus vínculos com pastas e repertórios. Nos repertórios, preserva o momento, a ordem e as observações, deixando o espaço sem música associada.
 *   **Clonar música:** Cria uma cópia editável com os dados e o texto integral da cifra.
 *   **Importar cifra:** Aceita um PDF local ou um link público de página/PDF. A importação reconstrói o espaçamento horizontal pelos posicionamentos no PDF para manter os acordes sobre a letra. PDF escaneado exige OCR (ainda indisponível), e a importação de links depende das permissões CORS do site.
-*   **Consultar cifra:** Inclui metrônomo ajustável, controle visual de instrumento e afinador em breve (com comportamento que varia conforme o instrumento), impressão e exportação para PDF pela janela de impressão do navegador.
+*   **Consultar cifra:** Inclui metrônomo ajustável, controle visual de instrumento e afinador em breve (com comportamento que varia conforme o instrumento), impressão e exportação para PDF pela janela de impressão do navegador. Ao transpor, o sistema altera símbolos de acorde em linhas exclusivas de acordes e acordes marcados entre colchetes; o texto da letra permanece intacto.
 *   **Interface de Cadastro `[+]`:**
     *   Editor de texto limpo com fonte monoespaçada (`Courier New`) para garantir que os acordes digitados fiquem alinhados com as palavras.
     *   Após importar, o conteúdo é aberto para revisão antes de ser salvo.

@@ -786,14 +786,52 @@ const Componentes = {
     return idx < 0 ? 0 : idx;
   },
 
+  analisarAcorde(token) {
+    const partes = token.match(/^([([{]*)([A-G](?:#|b)?)(.*?)([)\]},;:]*)$/);
+    if (!partes) return null;
+    const sufixo = partes[3];
+    if (!/^(?:(?:maj|min|m|M|dim|aug|sus|add|º|°|ø|o|\+|-)?\d*(?:[#b]\d{1,2})*(?:M)?(?:\/[A-G](?:#|b)?)?)$/.test(sufixo)) {
+      return null;
+    }
+    return { abertura: partes[1], nota: partes[2], sufixo, fechamento: partes[4] };
+  },
+
+  transporAcorde(token, delta) {
+    const acorde = this.analisarAcorde(token);
+    if (!acorde) return token;
+    const baixo = acorde.sufixo.match(/^(.*)\/([A-G](?:#|b)?)$/);
+    const sufixo = baixo
+      ? `${baixo[1]}/${this.notas[(this.indiceNota(baixo[2]) + delta + 12) % 12]}`
+      : acorde.sufixo;
+    const nota = this.notas[(this.indiceNota(acorde.nota) + delta + 12) % 12];
+    return `${acorde.abertura}${nota}${sufixo}${acorde.fechamento}`;
+  },
+
   transporCifra(texto, origem, destino) {
     const delta = this.indiceNota(destino) - this.indiceNota(origem);
     if (!delta || !texto) return texto || "";
-    return texto.replace(/([A-G](?:#|b)?)(m|M|maj|min|dim|aug|sus|add|º|°)?(\d*)/g, (acorde, nota, sufixo = "", extra = "") => {
-      const idx = this.indiceNota(nota);
-      const nova = this.notas[(idx + delta + 12) % 12];
-      return nova + sufixo + extra;
-    });
+    const separadores = /^[()[\]{}.,;:]+$/;
+    return texto
+      .split(/(\r?\n)/)
+      .map((parte, indice) => {
+        if (indice % 2 === 1) return parte;
+        const tokens = parte.match(/\S+/g) || [];
+        const linhaDeAcordes =
+          tokens.length > 0 &&
+          tokens.every((token) => this.analisarAcorde(token) || separadores.test(token));
+        if (!linhaDeAcordes) {
+          return parte.replace(/[\[{][^\]}\s]+[\]}]/g, (marcado) => {
+            const abertura = marcado[0];
+            const fechamento = marcado[marcado.length - 1];
+            const acorde = marcado.slice(1, -1);
+            return `${abertura}${this.transporAcorde(acorde, delta)}${fechamento}`;
+          });
+        }
+        return parte.replace(/\S+/g, (token) => {
+          return this.transporAcorde(token, delta);
+        });
+      })
+      .join("");
   },
 
   escapar(valor) {

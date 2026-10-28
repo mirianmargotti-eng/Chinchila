@@ -145,6 +145,20 @@ const App = {
     oscilador.stop(this.audioContext.currentTime + 0.08);
   },
 
+  atualizarIntervaloMetronomo() {
+    if (!this.metronomoAtivo) return;
+    if (this.metronomoIntervalo !== null) window.clearInterval(this.metronomoIntervalo);
+    this.metronomoIntervalo = window.setInterval(
+      () => this.tocarBatida(),
+      60000 / this.metronomoBpm
+    );
+  },
+
+  definirMetronomoBpm(bpm) {
+    this.metronomoBpm = Math.min(240, Math.max(40, Math.round(bpm)));
+    this.atualizarIntervaloMetronomo();
+  },
+
   async alternarMetronomo() {
     if (this.metronomoAtivo) {
       this.pararMetronomo();
@@ -164,10 +178,7 @@ const App = {
       await this.audioContext.resume();
       this.metronomoAtivo = true;
       this.tocarBatida();
-      this.metronomoIntervalo = window.setInterval(
-        () => this.tocarBatida(),
-        60000 / this.metronomoBpm
-      );
+      this.atualizarIntervaloMetronomo();
       this.atualizarControlesMetronomo();
     } catch (erro) {
       this.pararMetronomo();
@@ -1131,6 +1142,14 @@ const App = {
   },
 
   tratarChange(evento) {
+    if (evento.target.matches(".metronomo-bpm")) {
+      const valor = Number(evento.target.value);
+      if (evento.target.value && Number.isFinite(valor)) {
+        this.definirMetronomoBpm(valor);
+      }
+      evento.target.value = String(this.metronomoBpm);
+      return;
+    }
     if (evento.target.matches("[data-selecao-pasta]")) {
       const id = Number(evento.target.value);
       const selecionadas = new Set(this.musicasSelecionadasPasta.map(Number));
@@ -1165,6 +1184,18 @@ const App = {
   },
 
   tratarInput(evento) {
+    if (evento.target.matches(".metronomo-bpm")) {
+      const valor = Number(evento.target.value);
+      if (
+        evento.target.value &&
+        Number.isInteger(valor) &&
+        valor >= 40 &&
+        valor <= 240
+      ) {
+        this.definirMetronomoBpm(valor);
+      }
+      return;
+    }
     if (evento.target.matches('[data-acao="buscar-musica-momento"]')) {
       const campo = evento.target.closest(".campo-musica").querySelector(".momento-busca-resultados");
       const busca = evento.target.value.trim();
