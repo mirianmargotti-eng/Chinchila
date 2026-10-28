@@ -2,6 +2,8 @@
 
 O aplicativo oferece telas de início, músicas, pastas, repertórios, agenda e configurações, além de uma interface de execução imersiva.
 
+Na barra lateral, as telas são agrupadas por área: Principal, Módulo Música (Músicas, Pastas e Repertórios), Agenda e Preferências.
+
 ## 1. Tela de Início (Painel de Controle)
 *   **Interruptor de Tema:** Pequeno botão discreto na barra superior com os símbolos gráficos do sol e da lua para alternar entre Modo Claro (padrão) e Modo Escuro.
 *   **Botão de Ação Principal:** `[+] Novo Roteiro` (cria uma sequência de músicas em branco).
@@ -18,21 +20,26 @@ O aplicativo oferece telas de início, músicas, pastas, repertórios, agenda e 
 *   **Lembretes e anotações:** Cadastro, edição e exclusão de lembretes locais com título, data e observação. Eles ficam visíveis no dia selecionado e, quando próximos, também aparecem no início.
 
 ## 3. Tela de Pastas (Nova)
-*   **Biblioteca de Categorias:** Lista ou grelha visual exibindo as pastas criadas pelo utilizador (ex: "Igreja da Mãe", "Pop Rock", "Sertanejo Antigo").
-*   **Navegação:** Ao clicar em uma pasta, o utilizador é levado para a listagem filtrada contendo as músicas associadas àquela categoria.
-*   **Adicionar músicas em lote:** Dentro de uma pasta, permitir selecionar várias músicas existentes no acervo e associá-las à pasta de uma só vez. A mesma música pode estar em mais de uma pasta; adicioná-la a uma pasta não remove suas outras associações.
-*   **Excluir pasta:** Remove a pasta e suas associações, sem excluir as músicas do acervo.
+*   **Biblioteca de Categorias:** A lista geral mostra a capa, o nome e a quantidade de músicas de cada pasta.
+*   **Tela própria da pasta:** Exibe capa personalizada, nome, busca das músicas vinculadas e ações para renomear ou excluir a pasta.
+*   **Adicionar músicas em lote:** Uma lista simples permite pesquisar e selecionar várias músicas do acervo para adicioná-las de uma só vez. Uma música pode pertencer a mais de uma pasta.
+*   **Remover música da pasta:** Desvincula a música da pasta sem apagá-la do acervo ou de outras pastas.
+*   **Excluir pasta:** Remove a pasta e somente seu vínculo com as músicas, sem excluir as músicas do acervo.
 
 ## 4. Tela de Músicas (O Grande Acervo)
 *   **Lista Geral:** Exibição de todas as músicas salvas na memória local.
+*   **Paginação:** Exibe até 6 músicas por página para manter a lista compacta e facilitar a navegação em acervos grandes.
 *   **Filtros Rápidos:** 
     *   Busca por texto no título ou autor.
     *   Filtro rápido por pasta ativa.
     *   A busca e o filtro por pasta devem refletir as associações: uma música pode aparecer em várias pastas.
 *   **Exclusão de música:** Remove a música e seus vínculos com pastas e repertórios. Nos repertórios, preserva o momento, a ordem e as observações, deixando o espaço sem música associada.
+*   **Clonar música:** Cria uma cópia editável com os dados e o texto integral da cifra.
+*   **Importar cifra:** Aceita um PDF local ou um link público de página/PDF. A importação reconstrói o espaçamento horizontal pelos posicionamentos no PDF para manter os acordes sobre a letra. PDF escaneado exige OCR (ainda indisponível), e a importação de links depende das permissões CORS do site.
+*   **Consultar cifra:** Inclui metrônomo ajustável, controle visual de instrumento e afinador em breve (com comportamento que varia conforme o instrumento), impressão e exportação para PDF pela janela de impressão do navegador.
 *   **Interface de Cadastro `[+]`:**
-    *   *Aba Importar:* Campo para colar o link externo e extrair a cifra de forma automatizada (apenas online).
-    *   *Aba Manual:* Editor de texto limpo com fonte monoespaçada (`Courier New`) para garantir que os acordes digitados fiquem alinhados com as palavras.
+    *   Editor de texto limpo com fonte monoespaçada (`Courier New`) para garantir que os acordes digitados fiquem alinhados com as palavras.
+    *   Após importar, o conteúdo é aberto para revisão antes de ser salvo.
 
 ## 5. Tela de Configurações (Nova)
 *   **Blocos recolhíveis:** Aparência, momentos padrão, reporte de bug, cores de cifra e conta/sincronização ficam em seções independentes que abrem e fecham ao selecionar o título.

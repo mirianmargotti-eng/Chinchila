@@ -6,6 +6,7 @@ const Componentes = {
       home: '<path d="m3 10 9-7 9 7"/><path d="M5 9v11h14V9"/><path d="M9 20v-6h6v6"/>',
       music: '<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>',
       folder: '<path d="M3 6a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
+      image: '<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/>',
       list: '<path d="M8 6h13M8 12h13M8 18h13"/><path d="M3 6h.01M3 12h.01M3 18h.01"/>',
       settings: '<path d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z"/><path d="m19.4 15 .1.1 1.4 1.1-1.4 2.4-1.7-.6a8 8 0 0 1-1.7 1l-.3 1.8h-2.8l-.3-1.8a8 8 0 0 1-1.7-1l-1.7.6-1.4-2.4 1.4-1.1a7 7 0 0 1 0-2l-1.4-1.1 1.4-2.4 1.7.6a8 8 0 0 1 1.7-1l.3-1.8h2.8l.3 1.8a8 8 0 0 1 1.7 1l1.7-.6 1.4 2.4-1.4 1.1a7 7 0 0 1 0 2z"/>',
       search: '<circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/>',
@@ -23,6 +24,11 @@ const Componentes = {
       calendar: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 11h18"/>',
       sparkle: '<path d="m12 3 1.9 5.8L20 11l-6.1 2.2L12 19l-1.9-5.8L4 11l6.1-2.2z"/><path d="m19 14 1.1 2.9L23 18l-2.9 1.1L19 22l-1.1-2.9L15 18l2.9-1.1z"/>',
       info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v5m0-8h.01"/>',
+      copy: '<rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/>',
+      printer: '<path d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v7H6zM18 12h.01"/>',
+      download: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5M12 15V3"/>',
+      metronome: '<path d="m12 3 7 18H5z"/><path d="m12 3-2 12m2-4 5-4"/>',
+      tuner: '<path d="M12 22v-8"/><path d="M9 14a3 3 0 1 1 6 0"/><path d="M12 3v3m-7 1 2 2m12-2-2 2"/><path d="M5 4 3 2m16 2 2-2"/>',
       more: '<circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/>',
       close: '<path d="m18 6-12 12M6 6l12 12"/>',
       menu: '<path d="M4 6h16M4 12h16M4 18h16"/>',
@@ -32,20 +38,33 @@ const Componentes = {
   },
 
   layout({ telaAtiva, titulo, descricao, perfil, html, acaoCriar, rotuloCriar }) {
-    const links = [
-      { id: "inicio", rotulo: "Início", icone: "home" },
-      { id: "musicas", rotulo: "Músicas", icone: "music" },
-      { id: "pastas", rotulo: "Pastas", icone: "folder" },
-      { id: "celebracoes", rotulo: "Repertórios", icone: "list" },
-      { id: "agenda", rotulo: "Agenda", icone: "calendar" },
-      { id: "configuracoes", rotulo: "Configurações", icone: "settings" },
+    const gruposMenu = [
+      { titulo: "PRINCIPAL", links: [{ id: "inicio", rotulo: "Início", icone: "home" }] },
+      {
+        titulo: "MÓDULO MÚSICA",
+        links: [
+          { id: "musicas", rotulo: "Músicas", icone: "music" },
+          { id: "pastas", rotulo: "Pastas", icone: "folder" },
+          { id: "celebracoes", rotulo: "Repertórios", icone: "list" },
+        ],
+      },
+      { titulo: "AGENDA", links: [{ id: "agenda", rotulo: "Agenda", icone: "calendar" }] },
+      { titulo: "PREFERÊNCIAS", links: [{ id: "configuracoes", rotulo: "Configurações", icone: "settings" }] },
     ];
-    const nav = links
+    const nav = gruposMenu
       .map(
-        (link) => `
-          <button class="nav-link ${telaAtiva === link.id ? "ativo" : ""}" data-acao="navegar" data-tela="${link.id}">
-            ${this.icone(link.icone)}<span>${link.rotulo}</span>
-          </button>`
+        (grupo) => `
+          <section class="menu-grupo">
+            <div class="menu-titulo">${grupo.titulo}</div>
+            ${grupo.links
+              .map(
+                (link) => `
+                  <button class="nav-link ${telaAtiva === link.id ? "ativo" : ""}" data-acao="navegar" data-tela="${link.id}">
+                    ${this.icone(link.icone)}<span>${link.rotulo}</span>
+                  </button>`
+              )
+              .join("")}
+          </section>`
       )
       .join("");
     const iniciais = String(perfil.nome || "Meu perfil")
@@ -63,7 +82,6 @@ const Componentes = {
             <span class="marca-icone"><img src="assets/icons/logo_chinchila.svg" alt=""></span>
             <span class="marca-texto"><strong>Chinchila</strong><small>Sua música organizada</small></span>
           </button>
-          <div class="menu-titulo">MENU PRINCIPAL</div>
           <nav class="menu">${nav}</nav>
           <div class="sidebar-rodape">
             <div class="offline-card">
@@ -222,8 +240,8 @@ const Componentes = {
 
     return `
       <section class="boas-vindas">
-        <div><span class="sobrelinha">SEU ESPAÇO MUSICAL</span><h2>Organize suas músicas com tranquilidade.</h2><p>Suas cifras, pastas e roteiros em um só lugar — prontos mesmo sem internet.</p></div>
-        <span class="boas-vindas-icone">${this.icone("music")}</span>
+        <div class="boas-vindas-mensagem"><h2>Um abraça bem apertado viu :D</h2></div>
+        <img class="boas-vindas-imagem" src="assets/chinchila-boas-vindas.png" alt="Ilustração de uma chinchila usando chapéu e segurando uma flor.">
       </section>
       <section class="resumo-cards" aria-label="Resumo do acervo">
         <article class="resumo-card"><span class="resumo-icone azul">${this.icone("music")}</span><span><small>Músicas cadastradas</small><strong>${totalMusicas}</strong></span></article>
@@ -341,7 +359,7 @@ const Componentes = {
     return `Faltam ${dias} dias`;
   },
 
-  telaMusicas({ musicas, pastas, busca, pastaId }) {
+  telaMusicas({ musicas, pastas, busca, pastaId, total, pagina, totalPaginas, paginaTamanho }) {
     const opcoes = [`<option value="">Todas as pastas</option>`]
       .concat(
         pastas.map(
@@ -350,18 +368,26 @@ const Componentes = {
         )
       )
       .join("");
+    const inicioPagina = total ? (pagina - 1) * paginaTamanho + 1 : 0;
+    const fimPagina = Math.min(pagina * paginaTamanho, total);
+    const paginacao = totalPaginas > 1 ? `
+      <nav class="paginacao-musicas" aria-label="Paginação das músicas">
+        <button class="botao contorno" data-acao="pagina-musicas" data-delta="-1" ${pagina === 1 ? "disabled" : ""}>${this.icone("arrowLeft")} Anterior</button>
+        <span>Mostrando ${inicioPagina}–${fimPagina} de ${total} músicas · Página ${pagina} de ${totalPaginas}</span>
+        <button class="botao contorno" data-acao="pagina-musicas" data-delta="1" ${pagina === totalPaginas ? "disabled" : ""}>Próxima ${this.icone("chevron")}</button>
+      </nav>` : "";
     const linhas = musicas
       .map((musica) => {
-        const pasta = pastas.find((item) => item.id === musica.pasta_id);
         return `
           <tr>
             <td><button class="botao-icone favorito-botao ${musica.is_fixada ? "favorito-ativo" : ""}" data-acao="favoritar" data-id="${musica.id}" aria-label="${musica.is_fixada ? "Remover dos favoritos" : "Adicionar aos favoritos"}" title="${musica.is_fixada ? "Remover dos favoritos" : "Adicionar aos favoritos"}">${this.icone("star")}</button></td>
             <td><button class="musica-titulo" data-acao="abrir-cifra" data-id="${musica.id}"><span class="mini-icone">${this.icone("music")}</span><span><strong>${this.escapar(musica.titulo)}</strong><small>${this.escapar(musica.tom_original || "C")}</small></span></button></td>
             <td>${this.escapar(musica.autor || "—")}</td>
             <td><span class="tom-etiqueta">${this.escapar(musica.tom_original || "C")}</span></td>
-            <td>${this.escapar(pasta ? pasta.nome : "Sem pasta")}</td>
+            <td>${this.escapar((Banco.idsPastasDaMusica(musica).map((id) => Banco.obterPasta(id)?.nome).filter(Boolean).join(", ")) || "Sem pasta")}</td>
             <td><div class="acoes-linha">
               <button class="botao-icone" data-acao="editar-musica" data-id="${musica.id}" aria-label="Editar ${this.escapar(musica.titulo)}" title="Editar">${this.icone("edit")}</button>
+              <button class="botao-icone" data-acao="clonar-musica" data-id="${musica.id}" aria-label="Clonar ${this.escapar(musica.titulo)}" title="Clonar música">${this.icone("copy")}</button>
               <button class="botao-icone perigo" data-acao="apagar-musica" data-id="${musica.id}" aria-label="Apagar ${this.escapar(musica.titulo)}" title="Apagar">${this.icone("trash")}</button>
             </div></td>
           </tr>`;
@@ -376,8 +402,12 @@ const Componentes = {
         </form>
         <label class="filtro-pasta"><span>Filtrar por pasta</span><select class="filtro-select" aria-label="Filtrar músicas por pasta">${opcoes}</select></label>
       </section>
+      <div class="musicas-acoes-topo">
+        <p>Importe uma cifra de um PDF ou de um link público.</p>
+        <button class="botao contorno" data-acao="abrir-importacao-cifra">${this.icone("download")} Importar cifra</button>
+      </div>
       <section class="painel tabela-painel">
-        <div class="tabela-resumo"><span>${musicas.length} ${musicas.length === 1 ? "música encontrada" : "músicas encontradas"}</span><span>Seu acervo pessoal</span></div>
+        <div class="tabela-resumo"><span>${total} ${total === 1 ? "música encontrada" : "músicas encontradas"}</span><span>Seu acervo pessoal</span></div>
         ${musicas.length ? `
           <div class="tabela-scroll"><table class="tabela-musicas">
             <thead><tr><th aria-label="Favorita"></th><th>Título</th><th>Artista / autor</th><th>Tom</th><th>Pasta</th><th class="coluna-acoes">Ações</th></tr></thead>
@@ -385,10 +415,32 @@ const Componentes = {
           </table></div>
         ` : this.estadoVazio("music", busca || pastaId ? "Nenhuma música encontrada" : "Sua biblioteca começa aqui", busca || pastaId ? "Tente mudar a busca ou o filtro de pasta." : "Adicione suas próprias músicas e cifras. Elas aparecerão nesta lista.", { acao: "nova-musica", rotulo: "Adicionar primeira música" })}
       </section>
+      ${paginacao}
     `;
   },
 
-  formularioMusica({ musica, pastas }) {
+  modalImportarCifra() {
+    return `
+      <div class="dialogo-fundo">
+        <section class="dialogo-painel importacao-painel" role="dialog" aria-modal="true" aria-labelledby="importacao-titulo" aria-describedby="importacao-descricao">
+          <div class="dialogo-icone">${this.icone("download")}</div>
+          <h2 id="importacao-titulo">Importar cifra</h2>
+          <p id="importacao-descricao">Escolha um PDF com texto selecionável ou informe o link público de uma página/PDF. A importação será aberta para revisão antes de salvar.</p>
+          <form data-acao="importar-cifra">
+            <label class="dialogo-campo"><span>Link da cifra (opcional)</span><input name="url" type="url" placeholder="https://..."></label>
+            <label class="dialogo-campo"><span>Ou selecione um arquivo PDF</span><input name="arquivo" type="file" accept="application/pdf,.pdf"></label>
+            <p class="importacao-nota">O site precisa permitir acesso pelo navegador. PDFs digitalizados sem texto selecionável precisam de OCR, que ainda não está disponível.</p>
+            <div class="dialogo-acoes">
+              <button type="button" class="botao contorno" data-acao="cancelar-importacao">Cancelar</button>
+              <button type="submit" class="botao primario">Importar</button>
+            </div>
+          </form>
+        </section>
+      </div>
+    `;
+  },
+
+  formularioMusica({ musica, pastas, importacao = false }) {
     const m = musica || { titulo: "", autor: "", tom_original: "C", pasta_id: "", corpo_cifra: "", is_fixada: false };
     const opcoes = [`<option value="">Sem pasta</option>`]
       .concat(
@@ -403,7 +455,7 @@ const Componentes = {
       <section class="painel formulario-painel">
         <form class="formulario" data-acao="salvar-musica">
           <input type="hidden" name="id" value="${m.id || ""}">
-          <div class="formulario-intro"><span class="resumo-icone azul">${this.icone("music")}</span><div><h2>Detalhes da música</h2><p>Preencha as informações que ajudam você a encontrar e tocar esta cifra.</p></div></div>
+          <div class="formulario-intro"><span class="resumo-icone azul">${this.icone("music")}</span><div><h2>Detalhes da música</h2><p>${importacao ? "Revise os dados importados e ajuste o texto da cifra antes de salvar." : "Preencha as informações que ajudam você a encontrar e tocar esta cifra."}</p></div></div>
           <div class="campos-duplos">
             <label>Título da música<input name="titulo" required maxlength="160" value="${this.escapar(m.titulo)}" placeholder="Ex.: nome da música"></label>
             <label>Artista ou autor<input name="autor" maxlength="120" value="${this.escapar(m.autor || "")}" placeholder="Quem interpreta ou compôs?"></label>
@@ -523,14 +575,10 @@ const Componentes = {
       .filter((pasta) => pasta.nome.toLowerCase().includes(String(busca || "").trim().toLowerCase()))
       .map(
         (pasta) => `
-          <article class="pasta-card">
-            <div class="pasta-card-topo"><span class="pasta-icone">${this.icone("folder")}</span><div class="acoes-linha">
-              <button class="botao-icone" data-acao="renomear-pasta" data-id="${pasta.id}" aria-label="Renomear ${this.escapar(pasta.nome)}" title="Renomear">${this.icone("edit")}</button>
-              <button class="botao-icone perigo" data-acao="apagar-pasta" data-id="${pasta.id}" aria-label="Apagar ${this.escapar(pasta.nome)}" title="Apagar">${this.icone("trash")}</button>
-            </div></div>
-            <button class="pasta-abre" data-acao="abrir-pasta" data-id="${pasta.id}"><strong>${this.escapar(pasta.nome)}</strong><span>${contagens[pasta.id] || 0} ${(contagens[pasta.id] || 0) === 1 ? "música" : "músicas"}</span></button>
-            <button class="pasta-link" data-acao="abrir-pasta" data-id="${pasta.id}">Ver músicas ${this.icone("chevron")}</button>
-          </article>`
+          <button class="pasta-card" data-acao="abrir-pasta" data-id="${pasta.id}">
+            <span class="pasta-capa-mini">${pasta.capa ? `<img src="${this.escapar(pasta.capa)}" alt="">` : this.icone("folder")}</span>
+            <span class="pasta-abre"><strong>${this.escapar(pasta.nome)}</strong><span>${contagens[pasta.id] || 0} ${(contagens[pasta.id] || 0) === 1 ? "música" : "músicas"}</span></span>
+          </button>`
       )
       .join("");
     const encontrouPastas = pastas.some((pasta) =>
@@ -609,12 +657,30 @@ const Componentes = {
     `;
   },
 
-  telaCifra({ musica, tomAtual, pastaNome }) {
+  telaCifra({ musica, tomAtual, pastaNome, metronomoAtivo, bpm }) {
     return `
       <button class="link-botao voltar-link" data-acao="navegar" data-tela="musicas">${this.icone("arrowLeft")} Voltar às músicas</button>
       <section class="painel cifra-painel">
-        <div class="cifra-topo"><span class="resumo-icone azul">${this.icone("music")}</span><div class="item-detalhe"><h2>${this.escapar(musica.titulo)}</h2><p>${this.escapar(musica.autor || "Autor não informado")} · ${this.escapar(pastaNome || "Sem pasta")}</p></div><button class="botao contorno" data-acao="editar-musica" data-id="${musica.id}">${this.icone("edit")} Editar</button></div>
-        <div class="tom-barra"><span>Tom da cifra</span><div><button class="botao secundario" data-acao="transpor" data-delta="-1" aria-label="Baixar tom">−</button><strong>${this.escapar(tomAtual)}</strong><button class="botao secundario" data-acao="transpor" data-delta="1" aria-label="Subir tom">+</button></div></div>
+        <div class="cifra-topo"><span class="resumo-icone azul">${this.icone("music")}</span><div class="item-detalhe"><h2>${this.escapar(musica.titulo)}</h2><p>${this.escapar(musica.autor || "Autor não informado")} · ${this.escapar(pastaNome || "Sem pasta")}</p></div><div class="cifra-acoes-topo nao-imprimir"><button class="botao contorno" data-acao="editar-musica" data-id="${musica.id}">${this.icone("edit")} Editar</button><button class="botao contorno" data-acao="imprimir-cifra">${this.icone("printer")} Imprimir</button><button class="botao contorno" data-acao="exportar-pdf">${this.icone("download")} Salvar como PDF</button></div></div>
+        <div class="cifra-ferramentas nao-imprimir">
+          <div class="cifra-controles">
+            <div class="tom-barra"><span>Tom da cifra</span><div><button class="botao secundario" data-acao="transpor" data-delta="-1" aria-label="Baixar tom">−</button><strong>${this.escapar(tomAtual)}</strong><button class="botao secundario" data-acao="transpor" data-delta="1" aria-label="Subir tom">+</button></div></div>
+            <div class="instrumento-afinador">
+              <div class="instrumento-barra"><label for="instrumento-cifra">Instrumento</label><select id="instrumento-cifra" disabled aria-describedby="instrumento-ajuda"><option selected>Violão</option><option>Ukulele</option><option>Teclado</option><option>Baixo</option></select><small id="instrumento-ajuda"></small></div>
+              <div class="afinador-barra" aria-label="Afinador em breve">
+                <span class="afinador-icone">${this.icone("tuner")}</span>
+                <span class="afinador-texto"><strong>Afinador</strong><small>Em breve · varia conforme o instrumento</small></span>
+                <span class="afinador-status">Em breve</span>
+              </div>
+            </div>
+            <div class="metronomo">
+              <label for="metronomo-bpm">${this.icone("metronome")} Metrônomo</label>
+              <input id="metronomo-bpm" class="metronomo-bpm" type="number" min="40" max="240" step="1" value="${bpm}" aria-label="Batidas por minuto">
+              <span>BPM</span>
+              <button class="botao ${metronomoAtivo ? "secundario" : "contorno"}" data-acao="metronomo-toggle">${metronomoAtivo ? "Parar" : "Iniciar"}</button>
+            </div>
+          </div>
+        </div>
         <pre class="cifra-corpo">${this.escapar(this.transporCifra(musica.corpo_cifra, musica.tom_original, tomAtual) || "Esta música ainda não tem cifra cadastrada.")}</pre>
       </section>
     `;

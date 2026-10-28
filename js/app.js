@@ -7,6 +7,17 @@ const App = {
   buscaPastas: "",
   buscaCelebracoes: "",
   pastaFiltro: "",
+  paginaMusicas: 1,
+  musicasPorPagina: 6,
+  buscaMusicasPasta: "",
+  buscaAdicionarPasta: "",
+  adicaoPastaAberta: false,
+  musicasSelecionadasPasta: [],
+  importacaoAberta: false,
+  metronomoAtivo: false,
+  metronomoBpm: 80,
+  metronomoIntervalo: null,
+  audioContext: null,
   tomAtual: "C",
   agendaMes: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
   agendaSelecionada: "",
@@ -112,6 +123,190 @@ const App = {
     else this.renderizar();
   },
 
+  atualizarControlesMetronomo() {
+    const botao = document.querySelector('[data-acao="metronomo-toggle"]');
+    if (botao) {
+      botao.textContent = this.metronomoAtivo ? "Parar" : "Iniciar";
+      botao.classList.toggle("secundario", this.metronomoAtivo);
+      botao.classList.toggle("contorno", !this.metronomoAtivo);
+    }
+  },
+
+  tocarBatida() {
+    if (!this.audioContext) return;
+    const oscilador = this.audioContext.createOscillator();
+    const volume = this.audioContext.createGain();
+    oscilador.frequency.value = 1000;
+    volume.gain.setValueAtTime(0.14, this.audioContext.currentTime);
+    volume.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.08);
+    oscilador.connect(volume);
+    volume.connect(this.audioContext.destination);
+    oscilador.start();
+    oscilador.stop(this.audioContext.currentTime + 0.08);
+  },
+
+  async alternarMetronomo() {
+    if (this.metronomoAtivo) {
+      this.pararMetronomo();
+      return;
+    }
+    const AudioContextDisponivel = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextDisponivel) {
+      this.abrirDialogo({
+        titulo: "Metrônomo indisponível",
+        mensagem: "Este navegador não oferece suporte à reprodução de áudio necessária para o metrônomo.",
+        confirmacao: "Entendi",
+      });
+      return;
+    }
+    try {
+      this.audioContext = this.audioContext || new AudioContextDisponivel();
+      await this.audioContext.resume();
+      this.metronomoAtivo = true;
+      this.tocarBatida();
+      this.metronomoIntervalo = window.setInterval(
+        () => this.tocarBatida(),
+        60000 / this.metronomoBpm
+      );
+      this.atualizarControlesMetronomo();
+    } catch (erro) {
+      this.pararMetronomo();
+      this.abrirDialogo({
+        titulo: "Não foi possível iniciar o metrônomo",
+        mensagem: erro.message || "O navegador não conseguiu iniciar o áudio.",
+        confirmacao: "Fechar",
+      });
+    }
+  },
+
+  pararMetronomo() {
+    this.metronomoAtivo = false;
+    if (this.metronomoIntervalo !== null) {
+      window.clearInterval(this.metronomoIntervalo);
+      this.metronomoIntervalo = null;
+    }
+    if (this.audioContext && this.audioContext.state === "running") this.audioContext.suspend();
+    this.atualizarControlesMetronomo();
+  },
+
+  async extrairTextoPdf(dados) {
+    const versaoPdfJs = "4.10.38";
+    const baseCdn = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${versaoPdfJs}`;
+    let pdfjs;
+    try {
+      pdfjs = await import(`${baseCdn}/pdf.min.mjs`);
+    } catch {
+      throw new Error("Não foi possível carregar o leitor de PDF. Verifique sua conexão com a internet e tente novamente.");
+    }
+    pdfjs.GlobalWorkerOptions.workerSrc = `${baseCdn}/pdf.worker.min.mjs`;
+    const documento = await pdfjs.getDocument({ data: new Uint8Array(dados) }).promise;
+    const paginas = [];
+    const colunaPdf = 11 * 72 / 96 * 0.6;
+
+    for (let numero = 1; numero <= documento.numPages; numero += 1) {
+      const pagina = await documento.getPage(numero);
+      const conteudo = await pagina.getTextContent();
+      const itens = conteudo.items
+        .filter((item) => item.str && item.str.trim())
+        .map((item) => ({
+          x: item.transform[4],
+          y: item.transform[5],
+          texto: item.str,
+        }))
+        .sort((a, b) => b.y - a.y || a.x - b.x);
+      const linhas = [];
+
+      itens.forEach((item) => {
+        let linha = linhas[linhas.length - 1];
+        if (!linha || Math.abs(linha.y - item.y) > 2) {
+          linha = { y: item.y, itens: [] };
+          linhas.push(linha);
+        }
+        linha.itens.push(item);
+      });
+
+      const xBase = Math.min(...linhas.map((linha) => linha.itens[0].x));
+
+      paginas.push(
+        linhas
+          .map((linha) => {
+              let texto = "";
+              let proximaColuna = 0;
+              linha.itens.forEach((item, indice) => {
+                const coluna = Math.max(
+                  proximaColuna,
+                  Math.round((item.x - xBase) / colunaPdf)
+                );
+                texto += " ".repeat(coluna - proximaColuna);
+                texto += item.texto;
+                proximaColuna = coluna + Array.from(item.texto).length;
+              });
+            return texto.replace(/[ \t]+$/g, "");
+          })
+          .join("\n")
+      );
+    }
+    const texto = paginas.join("\n\n").replace(/^\n+|\n+$/g, "");
+    if (!texto.trim()) {
+      throw new Error("O PDF não contém texto selecionável. Arquivos digitalizados precisam de OCR, que ainda não está disponível.");
+    }
+    return texto;
+  },
+
+  async lerImportacaoCifra(url, arquivo) {
+    let dados;
+    let titulo = "";
+    if (arquivo) {
+      if (arquivo.type !== "application/pdf" && !arquivo.name.toLowerCase().endsWith(".pdf")) {
+        throw new Error("Selecione um arquivo PDF para importar a cifra.");
+      }
+      dados = await arquivo.arrayBuffer();
+      titulo = arquivo.name.replace(/\.pdf$/i, "").replace(/[_-]+/g, " ").trim();
+    } else {
+      let endereco;
+      try {
+        endereco = new URL(url);
+      } catch {
+        throw new Error("Informe um link válido ou selecione um arquivo PDF.");
+      }
+      if (!["http:", "https:"].includes(endereco.protocol)) {
+        throw new Error("Use um endereço público iniciado com http:// ou https://.");
+      }
+      titulo = decodeURIComponent(endereco.pathname.split("/").pop() || "")
+        .replace(/\.pdf$/i, "")
+        .replace(/[_-]+/g, " ")
+        .trim();
+      let resposta;
+      try {
+        resposta = await fetch(endereco.href);
+      } catch {
+        throw new Error("Não foi possível acessar este link. O site pode bloquear importações pelo navegador (CORS).");
+      }
+      if (!resposta.ok) throw new Error(`O link respondeu com erro ${resposta.status}. Confira o endereço e tente novamente.`);
+      const tipoConteudo = resposta.headers.get("content-type") || "";
+      const possivelPdf = tipoConteudo.includes("application/pdf") || /\.pdf(?:$|[?#])/i.test(endereco.href);
+      if (possivelPdf) {
+        dados = await resposta.arrayBuffer();
+      } else {
+        const copiaResposta = resposta.clone();
+        const bytes = await copiaResposta.arrayBuffer();
+        const cabecalho = new TextDecoder().decode(bytes.slice(0, 5));
+        if (cabecalho === "%PDF-") {
+          dados = bytes;
+          return { titulo, corpo_cifra: await this.extrairTextoPdf(dados) };
+        }
+        const html = await resposta.text();
+        const documento = new DOMParser().parseFromString(html, "text/html");
+        documento.querySelectorAll("script, style, noscript, nav, footer, header").forEach((item) => item.remove());
+        titulo = documento.title.trim();
+        const texto = (documento.body.innerText || documento.body.textContent || "").trim();
+        if (!texto) throw new Error("Não encontramos texto de cifra nesta página.");
+        return { titulo, corpo_cifra: texto };
+      }
+    }
+    return { titulo, corpo_cifra: await this.extrairTextoPdf(dados) };
+  },
+
   dataISO(data) {
     const ano = data.getFullYear();
     const mes = String(data.getMonth() + 1).padStart(2, "0");
@@ -192,19 +387,31 @@ const App = {
       descricao = "Seu acervo pessoal de músicas e cifras.";
       acaoCriar = "nova-musica";
       rotuloCriar = "Nova música";
+      const musicasEncontradas = Banco.listarMusicas({
+        busca: this.buscaMusicas,
+        pasta_id: this.pastaFiltro || null,
+      });
+      const totalPaginas = Math.max(1, Math.ceil(musicasEncontradas.length / this.musicasPorPagina));
+      this.paginaMusicas = Math.min(this.paginaMusicas, totalPaginas);
+      const inicioPagina = (this.paginaMusicas - 1) * this.musicasPorPagina;
       html = Componentes.telaMusicas({
-        musicas: Banco.listarMusicas({ busca: this.buscaMusicas, pasta_id: this.pastaFiltro || null }),
+        musicas: musicasEncontradas.slice(inicioPagina, inicioPagina + this.musicasPorPagina),
         pastas: Banco.listarPastas(),
         busca: this.buscaMusicas,
         pastaId: this.pastaFiltro,
+        total: musicasEncontradas.length,
+        pagina: this.paginaMusicas,
+        totalPaginas,
+        paginaTamanho: this.musicasPorPagina,
       });
     } else if (this.tela === "musica-form") {
       titulo = this.params.id ? "Editar música" : "Nova música";
       descricao = "Adicione ou atualize uma música do seu acervo.";
       telaAtiva = "musicas";
       html = Componentes.formularioMusica({
-        musica: this.params.id ? Banco.obterMusica(this.params.id) : null,
+        musica: this.params.id ? Banco.obterMusica(this.params.id) : this.params.importacao || null,
         pastas: Banco.listarPastas(),
+        importacao: Boolean(this.params.importacao),
       });
     } else if (this.tela === "cifra") {
       const musica = Banco.obterMusica(this.params.id);
@@ -215,7 +422,12 @@ const App = {
       html = Componentes.telaCifra({
         musica,
         tomAtual: this.tomAtual,
-        pastaNome: (Banco.obterPasta(musica.pasta_id) || {}).nome,
+        pastaNome: Banco.idsPastasDaMusica(musica)
+          .map((id) => Banco.obterPasta(id)?.nome)
+          .filter(Boolean)
+          .join(", ") || "Sem pasta",
+        metronomoAtivo: this.metronomoAtivo,
+        bpm: this.metronomoBpm,
       });
     } else if (this.tela === "celebracoes") {
       titulo = "Repertórios";
@@ -274,9 +486,33 @@ const App = {
       rotuloCriar = "Nova pasta";
       const contagens = {};
       Banco.listarMusicas().forEach((m) => {
-        if (m.pasta_id) contagens[m.pasta_id] = (contagens[m.pasta_id] || 0) + 1;
+        Banco.idsPastasDaMusica(m).forEach((id) => {
+          contagens[id] = (contagens[id] || 0) + 1;
+        });
       });
       html = Componentes.telaPastas({ pastas: Banco.listarPastas(), contagens, busca: this.buscaPastas });
+    } else if (this.tela === "pasta-detalhe") {
+      const pasta = Banco.obterPasta(this.params.id);
+      if (!pasta) return this.irPara("pastas");
+      titulo = pasta.nome;
+      descricao = "Gerencie a capa, as músicas e os detalhes desta pasta.";
+      telaAtiva = "pastas";
+      const musicasDaPasta = Banco.listarMusicas({
+        busca: this.buscaMusicasPasta,
+        pasta_id: pasta.id,
+      });
+      const musicasSelecionadas = this.musicasSelecionadasPasta.map(Number);
+      html = Componentes.telaDetalhePasta({
+        pasta,
+        musicas: musicasDaPasta,
+        totalMusicas: Banco.listarMusicas({ pasta_id: pasta.id }).length,
+        musicasDisponiveis: Banco.listarMusicas({ busca: this.buscaAdicionarPasta })
+          .filter((musica) => !Banco.idsPastasDaMusica(musica).includes(pasta.id)),
+        buscaMusicas: this.buscaMusicasPasta,
+        buscaAdicionar: this.buscaAdicionarPasta,
+        musicasSelecionadas,
+        adicaoAberta: this.adicaoPastaAberta,
+      });
     } else if (this.tela === "configuracoes") {
       titulo = "Configurações";
       descricao = "Preferências da sua experiência no Chinchila.";
@@ -324,7 +560,8 @@ const App = {
     } else {
       raiz.innerHTML =
         Componentes.layout({ telaAtiva, titulo, descricao, acaoCriar, rotuloCriar, perfil, html }) +
-        (this.dialogo ? Componentes.dialogo(this.dialogo) : "");
+        (this.dialogo ? Componentes.dialogo(this.dialogo) : "") +
+        (this.importacaoAberta ? Componentes.modalImportarCifra() : "");
     }
   },
 
@@ -373,9 +610,42 @@ const App = {
     if (cifra) cifra.style.fontSize = `${this.tamanhoFontePalco}px`;
   },
 
+  async lerCapaPasta(arquivo) {
+    if (!arquivo || !arquivo.type.startsWith("image/")) {
+      throw new Error("Selecione um arquivo de imagem válido para a capa.");
+    }
+    if (arquivo.size > 12 * 1024 * 1024) {
+      throw new Error("A imagem deve ter no máximo 12 MB.");
+    }
+    const origem = await new Promise((resolve, reject) => {
+      const leitor = new FileReader();
+      leitor.onload = () => resolve(leitor.result);
+      leitor.onerror = () => reject(new Error("Não foi possível ler a imagem selecionada."));
+      leitor.readAsDataURL(arquivo);
+    });
+    const imagem = await new Promise((resolve, reject) => {
+      const elemento = new Image();
+      elemento.onload = () => resolve(elemento);
+      elemento.onerror = () => reject(new Error("O arquivo selecionado não contém uma imagem válida."));
+      elemento.src = origem;
+    });
+    const escala = Math.min(1, 720 / Math.max(imagem.width, imagem.height));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.max(1, Math.round(imagem.width * escala));
+    canvas.height = Math.max(1, Math.round(imagem.height * escala));
+    const contexto = canvas.getContext("2d");
+    if (!contexto) throw new Error("Não foi possível preparar a imagem da capa.");
+    contexto.drawImage(imagem, 0, 0, canvas.width, canvas.height);
+    return canvas.toDataURL("image/jpeg", 0.82);
+  },
+
   tratarClique(evento) {
     if (evento.target.matches(".dialogo-fundo")) {
-      this.fecharDialogo();
+      if (this.dialogo) this.fecharDialogo();
+      else if (this.importacaoAberta) {
+        this.importacaoAberta = false;
+        this.renderizar();
+      }
       return;
     }
     const alvo = evento.target.closest("[data-acao]");
@@ -385,6 +655,27 @@ const App = {
 
     const acoes = {
       "cancelar-dialogo": () => this.fecharDialogo(),
+      "abrir-importacao-cifra": () => {
+        this.importacaoAberta = true;
+        this.renderizar();
+        document.querySelector('.importacao-painel input[name="url"]')?.focus();
+      },
+      "cancelar-importacao": () => {
+        this.importacaoAberta = false;
+        this.renderizar();
+      },
+      "pagina-musicas": () => {
+        const total = Banco.listarMusicas({
+          busca: this.buscaMusicas,
+          pasta_id: this.pastaFiltro || null,
+        }).length;
+        const totalPaginas = Math.max(1, Math.ceil(total / this.musicasPorPagina));
+        this.paginaMusicas = Math.max(
+          1,
+          Math.min(totalPaginas, this.paginaMusicas + Number(alvo.dataset.delta))
+        );
+        this.renderizar();
+      },
       navegar: () => this.irPara(alvo.dataset.tela),
       "navegar-agenda-data": () => {
         this.agendaSelecionada = alvo.dataset.data;
@@ -504,6 +795,20 @@ const App = {
         this.tomAtual = musica ? musica.tom_original : "C";
         this.irPara("cifra", { id });
       },
+      "clonar-musica": () => {
+        const musica = Banco.obterMusica(id);
+        if (!musica) return;
+        const copia = Banco.salvarMusica({
+          ...musica,
+          id: null,
+          titulo: `${musica.titulo} (cópia)`,
+          is_fixada: false,
+        });
+        this.irPara("musica-form", { id: copia.id });
+      },
+      "metronomo-toggle": () => this.alternarMetronomo(),
+      "imprimir-cifra": () => window.print(),
+      "exportar-pdf": () => window.print(),
       "nova-musica": () => this.irPara("musica-form"),
       "editar-musica": () => this.irPara("musica-form", { id }),
       favoritar: () => {
@@ -625,34 +930,40 @@ const App = {
           this.irPara("pastas");
         });
       },
-      "renomear-pasta": () => {
-        const pasta = Banco.obterPasta(id);
-        this.abrirDialogo({
-          titulo: "Renomear pasta",
-          mensagem: "Digite o novo nome para esta pasta.",
-          tipo: "entrada",
-          valorInicial: pasta ? pasta.nome : "",
-          placeholder: "Nome da pasta",
-          confirmacao: "Salvar nome",
-        }, (nome) => {
-          if (nome.trim()) Banco.atualizarPasta(id, nome.trim());
-          this.renderizar();
-        });
-      },
       "apagar-pasta": () => {
         this.abrirDialogo({
           titulo: "Apagar pasta",
-          mensagem: "As músicas desta pasta não serão excluídas; elas ficarão sem pasta.",
+          mensagem: "A pasta e seus vínculos serão removidos. As músicas continuarão no acervo e em quaisquer outras pastas.",
           confirmacao: "Apagar pasta",
           perigo: true,
         }, () => {
           Banco.apagarPasta(id);
-          this.renderizar();
+          this.adicaoPastaAberta = false;
+          this.musicasSelecionadasPasta = [];
+          this.irPara("pastas");
         });
       },
       "abrir-pasta": () => {
-        this.pastaFiltro = String(id);
-        this.irPara("musicas");
+        this.buscaMusicasPasta = "";
+        this.buscaAdicionarPasta = "";
+        this.adicaoPastaAberta = false;
+        this.musicasSelecionadasPasta = [];
+        this.irPara("pasta-detalhe", { id });
+      },
+      "voltar-pastas": () => this.irPara("pastas"),
+      "alternar-adicao-pasta": () => {
+        this.adicaoPastaAberta = !this.adicaoPastaAberta;
+        this.buscaAdicionarPasta = "";
+        this.musicasSelecionadasPasta = [];
+        this.renderizar();
+      },
+      "remover-musica-pasta": () => {
+        Banco.removerMusicaDaPasta(this.params.id, id);
+        this.renderizar();
+      },
+      "remover-capa-pasta": () => {
+        Banco.atualizarPasta(this.params.id, { capa: "" });
+        this.renderizar();
       },
     };
 
@@ -662,7 +973,7 @@ const App = {
     }
   },
 
-  tratarSubmit(evento) {
+  async tratarSubmit(evento) {
     const form = evento.target.closest("form[data-acao]");
     if (!form) return;
     evento.preventDefault();
@@ -673,7 +984,68 @@ const App = {
       return;
     }
 
+    if (form.dataset.acao === "salvar-pasta-detalhe") {
+      const arquivo = dados.get("capa");
+      try {
+        const capa = arquivo instanceof File && arquivo.size ? await this.lerCapaPasta(arquivo) : undefined;
+        const alteracoes = { nome: String(dados.get("nome") || "").trim() };
+        if (capa !== undefined) alteracoes.capa = capa;
+        Banco.atualizarPasta(dados.get("id"), alteracoes);
+        this.renderizar();
+      } catch (erro) {
+        const envioDeCapa = arquivo instanceof File && arquivo.size;
+        this.abrirDialogo({
+          titulo: envioDeCapa ? "Não foi possível salvar a capa" : "Não foi possível salvar a pasta",
+          mensagem: erro.message || "Ocorreu um erro ao salvar as alterações.",
+          confirmacao: "Entendi",
+        });
+      }
+      return;
+    }
+
+    if (form.dataset.acao === "adicionar-musicas-pasta") {
+      Banco.adicionarMusicasNaPasta(this.params.id, this.musicasSelecionadasPasta);
+      this.musicasSelecionadasPasta = [];
+      this.adicaoPastaAberta = false;
+      this.buscaAdicionarPasta = "";
+      this.renderizar();
+      return;
+    }
+
+    if (form.dataset.acao === "importar-cifra") {
+      const url = String(dados.get("url") || "").trim();
+      const arquivo = dados.get("arquivo");
+      const botao = form.querySelector('button[type="submit"]');
+      if (!url && !(arquivo instanceof File && arquivo.size)) {
+        this.importacaoAberta = false;
+        this.abrirDialogo({
+          titulo: "Falta escolher a cifra",
+          mensagem: "Informe um link público ou selecione um arquivo PDF para importar.",
+          confirmacao: "Entendi",
+        });
+        return;
+      }
+      botao.disabled = true;
+      botao.textContent = "Importando...";
+      try {
+        const importacao = await this.lerImportacaoCifra(
+          url,
+          arquivo instanceof File && arquivo.size ? arquivo : null
+        );
+        this.irPara("musica-form", { importacao });
+      } catch (erro) {
+        this.importacaoAberta = false;
+        this.abrirDialogo({
+          titulo: "Não foi possível importar",
+          mensagem: erro.message || "Ocorreu um erro ao ler a cifra.",
+          confirmacao: "Fechar",
+        });
+      }
+      return;
+    }
+
     if (form.dataset.acao === "salvar-musica") {
+      const novaMusica = !dados.get("id");
       Banco.salvarMusica({
         id: dados.get("id"),
         titulo: dados.get("titulo"),
@@ -683,6 +1055,7 @@ const App = {
         corpo_cifra: dados.get("corpo_cifra"),
         is_fixada: dados.get("is_fixada") === "on",
       });
+      if (novaMusica) this.paginaMusicas = 1;
       this.irPara("musicas");
     }
 
@@ -732,11 +1105,22 @@ const App = {
 
     if (form.dataset.acao === "filtrar-musicas") {
       this.buscaMusicas = String(dados.get("busca") || "");
+      this.paginaMusicas = 1;
       this.renderizar();
     }
 
     if (form.dataset.acao === "filtrar-pastas") {
       this.buscaPastas = String(dados.get("busca") || "");
+      this.renderizar();
+    }
+
+    if (form.dataset.acao === "filtrar-musicas-pasta") {
+      this.buscaMusicasPasta = String(dados.get("busca_musicas") || "");
+      this.renderizar();
+    }
+
+    if (form.dataset.acao === "filtrar-adicao-pasta") {
+      this.buscaAdicionarPasta = String(dados.get("busca_adicionar") || "");
       this.renderizar();
     }
 
@@ -747,6 +1131,18 @@ const App = {
   },
 
   tratarChange(evento) {
+    if (evento.target.matches("[data-selecao-pasta]")) {
+      const id = Number(evento.target.value);
+      const selecionadas = new Set(this.musicasSelecionadasPasta.map(Number));
+      if (evento.target.checked) selecionadas.add(id);
+      else selecionadas.delete(id);
+      this.musicasSelecionadasPasta = [...selecionadas];
+      const resumo = document.querySelector(".pasta-selecao-acoes span");
+      const botao = document.querySelector('.pasta-selecao-acoes button[type="submit"]');
+      if (resumo) resumo.textContent = `${selecionadas.size} selecionada(s)`;
+      if (botao) botao.disabled = selecionadas.size === 0;
+      return;
+    }
     const select = evento.target;
     if (select.matches('[data-acao="selecionar-fonte-texto"]')) {
       Banco.definirFonteTexto(select.value);
@@ -763,6 +1159,7 @@ const App = {
     }
     if (select.matches(".filtro-select")) {
       this.pastaFiltro = select.value;
+      this.paginaMusicas = 1;
       this.renderizar();
     }
   },

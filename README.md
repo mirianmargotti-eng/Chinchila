@@ -6,6 +6,8 @@ O **Chinchila** é um aplicativo focado na organização e execução de repert�
 *   **Aplicativo Android local-first:** A direção definida é empacotar a interface atual com Capacitor e usar SQLite local. O app deverá funcionar sem internet ou dependência de servidor; a sincronização em nuvem será opcional para compartilhar e recuperar o acervo entre dispositivos. A implementação ainda está pendente.
 *   **Conta identificada por email:** O email dará acesso à conta, mas não será o armazenamento dos dados. A conta deverá manter um identificador próprio para permitir trocar o email sem perder o acervo.
 *   **Organização por Pastas:** Separação limpa de músicas por géneros, categorias ou preferências para evitar misturar repertórios distintos.
+*   **Módulo Música:** Biblioteca paginada, clonagem de músicas com suas cifras, importação de PDF/texto público, impressão e exportação para PDF pelo navegador.
+*   **Metrônomo e instrumentos:** Metrônomo ajustável na consulta da cifra; seletor de instrumento visível como prévia para uma futura consulta específica.
 *   **Roteiros Flexíveis e Reutilizáveis:** Criação de sequências de execução onde qualquer evento pode ser editado, adaptado ou duplicado para a semana seguinte.
 *   **Agenda mensal:** Calendário local com repertórios vinculados às datas dos eventos, anotações e lembretes; os repertórios dos próximos sete dias aparecem no início.
 *   **Momentos Customizáveis:** Blocos de execução totalmente editáveis pelo utilizador para se adaptar tanto a missas (Entrada da Bíblia) quanto a shows (Bloco Noite, Bloco Tarde).
@@ -13,6 +15,8 @@ O **Chinchila** é um aplicativo focado na organização e execução de repert�
 *   **Tema Claro e Escuro:** Interface clara por padrão, com alternância para o Modo Escuro disponível nas telas principais.
 *   **Acervo pessoal sem exemplos:** A primeira abertura começa sem músicas, pastas ou roteiros de demonstração. Ao atualizar uma instalação anterior, os exemplos conhecidos são removidos sem apagar os demais dados locais.
 *   **Interface responsiva:** Navegação adaptada para celular e computador, mantendo as ações de músicas, pastas, repertórios e cifras conectadas ao armazenamento local.
+
+> A importação de PDFs usa um leitor carregado sob demanda e precisa de conexão com a internet para carregar essa biblioteca. O PDF deve conter texto selecionável; OCR de páginas digitalizadas ainda não está disponível. A importação de links depende das permissões CORS do site de origem. A opção “Salvar como PDF” abre a janela de impressão do navegador, onde é possível escolher “Salvar como PDF”.
 
 ## 📁 Estrutura da Documentação
 Consulte os arquivos gerados para obter os detalhes técnicos do projeto:

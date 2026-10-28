@@ -129,16 +129,21 @@ const Banco = {
   },
 
   criarPasta(nome) {
-    const pasta = { id: this._id("pastas"), nome: String(nome || "").trim() };
+    const pasta = { id: this._id("pastas"), nome: String(nome || "").trim(), capa: "" };
     this.estado.pastas.push(pasta);
     this.gravar();
     return pasta;
   },
 
-  atualizarPasta(id, nome) {
+  atualizarPasta(id, dados) {
     const pasta = this.obterPasta(id);
     if (!pasta) return null;
-    pasta.nome = String(nome || "").trim();
+    if (typeof dados === "string") {
+      pasta.nome = dados.trim();
+    } else {
+      if (typeof dados.nome === "string") pasta.nome = dados.nome.trim();
+      if (typeof dados.capa === "string") pasta.capa = dados.capa;
+    }
     this.gravar();
     return pasta;
   },
@@ -147,9 +152,16 @@ const Banco = {
     const num = Number(id);
     this.estado.pastas = this.estado.pastas.filter((p) => p.id !== num);
     this.estado.musicas.forEach((m) => {
-      if (m.pasta_id === num) m.pasta_id = null;
+      const pastas = this.idsPastasDaMusica(m).filter((pastaId) => pastaId !== num);
+      m.pasta_ids = pastas;
+      m.pasta_id = pastas[0] || null;
     });
     this.gravar();
+  },
+
+  idsPastasDaMusica(musica) {
+    const ids = Array.isArray(musica.pasta_ids) ? musica.pasta_ids : [musica.pasta_id];
+    return [...new Set(ids.map(Number).filter((id) => Number.isInteger(id) && id > 0))];
   },
 
   listarMusicas({ busca = "", pasta_id = null, apenasFixadas = false } = {}) {
@@ -157,13 +169,42 @@ const Banco = {
     return this.estado.musicas
       .filter((m) => {
         if (apenasFixadas && !m.is_fixada) return false;
-        if (pasta_id && m.pasta_id !== Number(pasta_id)) return false;
+        const idsPastas = this.idsPastasDaMusica(m);
+        if (pasta_id && !idsPastas.includes(Number(pasta_id))) return false;
         if (!termo) return true;
-        const pasta = this.obterPasta(m.pasta_id);
-        const tipo = pasta ? pasta.nome : "";
-        return [m.titulo, m.autor, tipo].join(" ").toLowerCase().includes(termo);
+        const nomesPastas = idsPastas.map((id) => this.obterPasta(id)?.nome || "");
+        return [m.titulo, m.autor, ...nomesPastas].join(" ").toLowerCase().includes(termo);
       })
       .sort((a, b) => a.titulo.localeCompare(b.titulo, "pt-BR"));
+  },
+
+  adicionarMusicasNaPasta(pastaId, musicasIds) {
+    const pasta = this.obterPasta(pastaId);
+    if (!pasta) return 0;
+    let adicionadas = 0;
+    musicasIds.map(Number).forEach((musicaId) => {
+      const musica = this.obterMusica(musicaId);
+      if (!musica) return;
+      const pastas = this.idsPastasDaMusica(musica);
+      if (!pastas.includes(pasta.id)) {
+        pastas.push(pasta.id);
+        adicionadas += 1;
+      }
+      musica.pasta_ids = pastas;
+      musica.pasta_id = musica.pasta_id || pasta.id;
+    });
+    this.gravar();
+    return adicionadas;
+  },
+
+  removerMusicaDaPasta(pastaId, musicaId) {
+    const musica = this.obterMusica(musicaId);
+    if (!musica) return false;
+    const pastas = this.idsPastasDaMusica(musica).filter((id) => id !== Number(pastaId));
+    musica.pasta_ids = pastas;
+    musica.pasta_id = pastas[0] || null;
+    this.gravar();
+    return true;
   },
 
   obterMusica(id) {
@@ -171,8 +212,20 @@ const Banco = {
   },
 
   salvarMusica(dados) {
+    const existente = dados.id ? this.obterMusica(dados.id) : null;
+    const pastaEscolhida = dados.pasta_id ? Number(dados.pasta_id) : null;
+    const pastas = Array.isArray(dados.pasta_ids)
+      ? dados.pasta_ids.map(Number).filter((id) => id > 0)
+      : [
+          ...(pastaEscolhida ? [pastaEscolhida] : []),
+          ...this.idsPastasDaMusica(existente || {}).filter(
+            (id) => id !== Number(existente && existente.pasta_id) && id !== pastaEscolhida
+          ),
+        ];
+    const pastasUnicas = [...new Set(pastas)];
     const payload = {
-      pasta_id: dados.pasta_id ? Number(dados.pasta_id) : null,
+      pasta_id: pastasUnicas[0] || null,
+      pasta_ids: pastasUnicas,
       titulo: String(dados.titulo || "").trim(),
       autor: String(dados.autor || "").trim(),
       tom_original: String(dados.tom_original || "C").trim() || "C",
@@ -417,7 +470,7 @@ const Banco = {
         .filter((demo) =>
           this.estado.musicas.some((musica) =>
             musica.id === demo.id &&
-            musica.pasta_id === demo.pasta_id &&
+            this.idsPastasDaMusica(musica).includes(demo.pasta_id) &&
             musica.titulo === demo.titulo &&
             musica.autor === demo.autor &&
             musica.tom_original === demo.tom_original &&
@@ -509,7 +562,7 @@ const Banco = {
           (demo) =>
             demo.id === pasta.id &&
             demo.nome === pasta.nome &&
-            !this.estado.musicas.some((musica) => musica.pasta_id === pasta.id)
+            !this.estado.musicas.some((musica) => this.idsPastasDaMusica(musica).includes(pasta.id))
         )
     );
   },
