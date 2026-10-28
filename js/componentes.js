@@ -235,8 +235,8 @@ const Componentes = {
 
     return `
       <section class="boas-vindas">
-        <div><span class="sobrelinha">SEU ESPAÇO MUSICAL</span><h2>Organize suas músicas com tranquilidade.</h2><p>Suas cifras, pastas e roteiros em um só lugar — prontos mesmo sem internet.</p></div>
-        <span class="boas-vindas-icone">${this.icone("music")}</span>
+        <div class="boas-vindas-mensagem"><h2>Um abraça bem apertado viu :D</h2></div>
+        <img class="boas-vindas-imagem" src="assets/chinchila-boas-vindas.png" alt="Ilustração de uma chinchila usando chapéu e segurando uma flor.">
       </section>
       <section class="resumo-cards" aria-label="Resumo do acervo">
         <article class="resumo-card"><span class="resumo-icone azul">${this.icone("music")}</span><span><small>Músicas cadastradas</small><strong>${totalMusicas}</strong></span></article>
