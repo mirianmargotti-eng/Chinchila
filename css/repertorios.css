@@ -1,0 +1,88 @@
+/* Listagem e editor de repertórios. */
+
+.busca-rota {
+  width: min(380px, 100%);
+}
+
+.roteiro-painel {
+  padding: 0;
+  overflow: hidden;
+}
+
+.roteiro-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 68px;
+  padding: 9px 16px;
+  border-bottom: 1px solid var(--borda);
+}
+
+.roteiro-card:last-child {
+  border-bottom: 0;
+}
+
+.roteiro-card:hover {
+  background: var(--superficie-suave);
+}
+
+.roteiro-abre {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-width: 0;
+  flex: 1;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.momentos-painel {
+  display: grid;
+  gap: 12px;
+}
+
+.momento-card {
+  padding: 15px;
+  border: 1px solid var(--borda);
+  border-radius: 12px;
+  background: var(--superficie-suave);
+}
+
+.momento-topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 13px;
+}
+
+.momento-topo strong {
+  font-size: 11px;
+}
+
+.campo-largo {
+  grid-column: 1 / -1;
+}
+
+.icone-girar {
+  transform: rotate(90deg);
+}
+
+.icone-girar-baixo {
+  transform: rotate(-90deg);
+}
+
+.aviso-info {
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--borda);
+  border-radius: 10px;
+  background: var(--superficie-suave);
+  color: var(--texto-secundario);
+  font-size: 11px;
+  line-height: 1.6;
+}
+

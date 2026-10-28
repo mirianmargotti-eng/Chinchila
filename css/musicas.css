@@ -1,0 +1,366 @@
+/* Biblioteca, filtros, tabela e formulário de músicas. */
+
+.filtros-linha {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.busca-form {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: min(380px, 100%);
+  min-height: 40px;
+  padding: 0 12px;
+  border: 1px solid var(--borda);
+  border-radius: 10px;
+  background: var(--superficie);
+  color: var(--texto-suave);
+}
+
+.busca-form .icone {
+  width: 16px;
+  height: 16px;
+}
+
+.busca-form input {
+  width: 100%;
+  min-width: 0;
+  padding: 10px 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--texto);
+  font-size: 11px;
+}
+
+.busca-form input::placeholder {
+  color: var(--texto-suave);
+}
+
+.filtro-pasta {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--texto-secundario);
+  font-size: 11px;
+}
+
+.filtro-select,
+.formulario select,
+.formulario input,
+.formulario textarea,
+.momento-card input,
+.momento-card select {
+  min-height: 40px;
+  padding: 9px 11px;
+  border: 1px solid var(--borda);
+  border-radius: 9px;
+  background: var(--superficie);
+  color: var(--texto);
+  font-size: 11px;
+}
+
+.filtro-select {
+  min-width: 150px;
+}
+
+.tabela-painel {
+  padding: 0;
+  overflow: hidden;
+}
+
+.tabela-resumo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 51px;
+  padding: 0 20px;
+  border-bottom: 1px solid var(--borda);
+  color: var(--texto-secundario);
+  font-size: 10px;
+}
+
+.tabela-resumo span:first-child {
+  color: var(--texto);
+  font-weight: 650;
+}
+
+.tabela-scroll {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.tabela-musicas {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.tabela-musicas th {
+  height: 43px;
+  padding: 0 13px;
+  background: var(--superficie-suave);
+  color: var(--texto-suave);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.45px;
+  text-transform: uppercase;
+}
+
+.tabela-musicas td {
+  height: 66px;
+  padding: 8px 13px;
+  border-top: 1px solid var(--borda);
+  color: var(--texto-secundario);
+  font-size: 11px;
+}
+
+.tabela-musicas tbody tr:hover {
+  background: var(--superficie-suave);
+}
+
+.tabela-musicas th:first-child,
+.tabela-musicas td:first-child {
+  width: 48px;
+  padding-left: 18px;
+  padding-right: 2px;
+}
+
+.tabela-musicas th:nth-child(2) {
+  min-width: 190px;
+}
+
+.tabela-musicas th:nth-child(3) {
+  min-width: 145px;
+}
+
+.tabela-musicas th:last-child,
+.tabela-musicas td:last-child {
+  padding-right: 18px;
+}
+
+.coluna-acoes {
+  text-align: right;
+}
+
+.musica-titulo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.mini-icone {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 10px;
+  background: var(--marca-suave);
+  color: var(--marca);
+}
+
+.mini-icone .icone {
+  width: 15px;
+  height: 15px;
+}
+
+.musica-titulo > span:last-child {
+  display: grid;
+  gap: 4px;
+}
+
+.musica-titulo strong {
+  max-width: 270px;
+  overflow: hidden;
+  color: var(--texto);
+  font-size: 11px;
+  text-overflow: ellipsis;
+}
+
+.musica-titulo small {
+  color: var(--texto-suave);
+  font-size: 9px;
+}
+
+.tom-etiqueta {
+  display: inline-grid;
+  min-width: 27px;
+  min-height: 25px;
+  place-items: center;
+  border-radius: 8px;
+  background: var(--marca-suave);
+  color: var(--marca);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.acoes-linha {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.tabela-musicas .acoes-linha {
+  justify-content: flex-end;
+}
+
+.favorito-botao .icone {
+  color: var(--texto-suave);
+}
+
+.favorito-botao.favorito-ativo .icone {
+  fill: #f5c451;
+  color: #dfaa29;
+}
+
+.estado-vazio {
+  display: flex;
+  min-height: 190px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 26px 16px;
+  text-align: center;
+}
+
+.vazio-icone {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  border-radius: 15px;
+  background: var(--marca-suave);
+  color: var(--marca);
+}
+
+.vazio-icone .icone {
+  width: 22px;
+  height: 22px;
+}
+
+.estado-vazio h3 {
+  margin: 14px 0 5px;
+  font-size: 13px;
+}
+
+.estado-vazio p {
+  max-width: 340px;
+  margin: 0 0 15px;
+  color: var(--texto-suave);
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+.formulario-painel {
+  max-width: 820px;
+  padding: 24px;
+}
+
+.formulario {
+  display: grid;
+  gap: 19px;
+}
+
+.formulario-intro {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--borda);
+}
+
+.formulario-intro p {
+  line-height: 1.5;
+}
+
+.campos-duplos {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 15px;
+}
+
+.formulario label,
+.momento-card label {
+  display: grid;
+  gap: 7px;
+  color: var(--texto-secundario);
+  font-size: 10px;
+  font-weight: 650;
+}
+
+.formulario input,
+.formulario select,
+.formulario textarea,
+.momento-card input,
+.momento-card select {
+  width: 100%;
+  font-weight: 450;
+}
+
+.formulario input::placeholder,
+.formulario textarea::placeholder,
+.momento-card input::placeholder {
+  color: var(--texto-suave);
+}
+
+.formulario textarea {
+  resize: vertical;
+}
+
+.formulario .cifra-editor {
+  min-height: 280px;
+  font-family: "Courier New", Courier, monospace;
+  line-height: 1.65;
+  white-space: pre;
+}
+
+.campo-ajuda {
+  color: var(--texto-suave);
+  font-size: 10px;
+  font-weight: 400;
+}
+
+.check-favorito {
+  display: flex !important;
+  align-items: center;
+  gap: 8px !important;
+  width: fit-content;
+  cursor: pointer;
+}
+
+.check-favorito input {
+  width: 15px;
+  min-height: 15px;
+  accent-color: var(--marca);
+}
+
+.check-favorito span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.check-favorito .icone {
+  width: 14px;
+  height: 14px;
+  color: #d8a52b;
+}
+
+.acoes-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+  padding-top: 4px;
+}
+

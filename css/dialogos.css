@@ -1,0 +1,139 @@
+/* Diálogos e formulários modais. */
+
+.dialogo-fundo {
+  position: fixed;
+  z-index: 1000;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(15, 23, 42, 0.48);
+}
+
+.dialogo-painel {
+  width: min(100%, 420px);
+  padding: 25px;
+  border: 1px solid var(--borda);
+  border-radius: 18px;
+  background: var(--superficie);
+  box-shadow: 0 24px 70px rgba(15, 23, 42, 0.2);
+}
+
+.dialogo-icone {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border-radius: 13px;
+  background: var(--marca-suave);
+  color: var(--marca);
+}
+
+.dialogo-icone.perigo {
+  background: color-mix(in srgb, var(--vermelho) 12%, transparent);
+  color: var(--vermelho);
+}
+
+.dialogo-painel h2 {
+  margin: 17px 0 7px;
+  font-size: 19px;
+}
+
+.dialogo-painel > p {
+  margin: 0;
+  color: var(--texto-secundario);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.dialogo-painel form {
+  margin-top: 21px;
+}
+
+.dialogo-campo {
+  display: grid;
+  gap: 7px;
+  color: var(--texto-secundario);
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.dialogo-campo input {
+  width: 100%;
+  min-height: 42px;
+  padding: 0 12px;
+  border: 1px solid var(--borda);
+  border-radius: 10px;
+  background: var(--superficie);
+  color: var(--texto);
+  font-size: 13px;
+}
+
+.dialogo-acoes {
+  display: flex;
+  justify-content: flex-end;
+  gap: 9px;
+}
+
+.dialogo-campo + .dialogo-acoes {
+  margin-top: 20px;
+}
+
+.dialogo-acoes .perigo {
+  border-color: var(--vermelho);
+  background: var(--vermelho);
+  color: #fff;
+}
+
+.dialogo-acoes .perigo:hover {
+  filter: brightness(0.94);
+}
+
+@media (max-width: 420px) {
+  .dialogo-fundo {
+    padding: 14px;
+  }
+
+  .dialogo-painel {
+    padding: 21px;
+  }
+}
+
+.musicas-acoes-topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: -4px 0;
+}
+
+.musicas-acoes-topo p {
+  margin: 0;
+  color: var(--texto-secundario);
+  font-size: 11px;
+}
+
+.paginacao-musicas {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+}
+
+.paginacao-musicas span {
+  color: var(--texto-secundario);
+  font-size: 11px;
+  font-weight: 650;
+  text-align: center;
+}
+
+.paginacao-musicas .botao {
+  flex: 0 0 auto;
+}
+
+.paginacao-musicas button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+}
+

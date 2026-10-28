@@ -1,0 +1,299 @@
+/* Controles de cifra, metrônomo e importação. */
+
+.cifra-ferramentas {
+  display: grid;
+  gap: 0;
+  padding: 12px 0;
+  border-top: 1px solid var(--borda);
+  border-bottom: 1px solid var(--borda);
+}
+
+.cifra-controles {
+  display: flex;
+  min-height: 48px;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding-bottom: 12px;
+}
+
+.cifra-acoes-topo {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-left: auto;
+}
+
+.cifra-acoes-topo .botao {
+  min-height: 34px;
+  margin-left: 0;
+  padding: 0 10px;
+  font-size: 10px;
+}
+
+.cifra-ferramentas .tom-barra {
+  min-width: 175px;
+  flex: 0 0 auto;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.instrumento-barra {
+  display: grid;
+  grid-template-columns: auto minmax(110px, 1fr);
+  align-items: center;
+  gap: 5px 8px;
+  color: var(--texto-secundario);
+  font-size: 11px;
+}
+
+.instrumento-barra select {
+  min-height: 34px;
+  padding: 5px 9px;
+  border: 1px solid var(--borda);
+  border-radius: 8px;
+  background: var(--superficie-suave);
+  color: var(--texto-secundario);
+  font-size: 11px;
+}
+
+.instrumento-barra small {
+  grid-column: 2;
+  color: var(--texto-suave);
+  font-size: 9px;
+}
+
+.instrumento-afinador {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.afinador-barra {
+  display: flex;
+  min-height: 40px;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 9px;
+  border: 1px solid var(--borda);
+  border-radius: 10px;
+  background: var(--superficie-suave);
+}
+
+.afinador-icone {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 9px;
+  background: var(--marca-suave);
+  color: var(--marca);
+}
+
+.afinador-icone .icone {
+  width: 16px;
+  height: 16px;
+}
+
+.afinador-texto {
+  display: grid;
+  gap: 3px;
+}
+
+.afinador-texto strong {
+  color: var(--texto);
+  font-size: 10px;
+}
+
+.afinador-texto small {
+  color: var(--texto-suave);
+  font-size: 9px;
+}
+
+.afinador-status {
+  margin-left: 4px;
+  padding: 4px 6px;
+  border-radius: 6px;
+  background: var(--marca-suave);
+  color: var(--marca);
+  font-size: 8px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.metronomo {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--texto-secundario);
+  font-size: 11px;
+}
+
+.metronomo label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 650;
+}
+
+.metronomo label .icone {
+  width: 16px;
+  height: 16px;
+}
+
+.metronomo-bpm {
+  width: 62px;
+  height: 34px;
+  padding: 4px 7px;
+  border: 1px solid var(--borda);
+  border-radius: 8px;
+  background: var(--superficie);
+  color: var(--texto);
+  text-align: center;
+}
+
+.metronomo .botao {
+  min-height: 34px;
+  padding: 0 10px;
+  font-size: 10px;
+}
+
+.importacao-painel {
+  max-height: min(90vh, 640px);
+  overflow: auto;
+}
+
+.importacao-painel form {
+  display: grid;
+  gap: 14px;
+}
+
+.dialogo-campo input[type="file"] {
+  min-height: auto;
+  padding: 9px;
+  font-size: 11px;
+}
+
+.importacao-nota {
+  margin: -4px 0 2px;
+  color: var(--texto-suave);
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.importacao-painel .dialogo-acoes {
+  margin-top: 2px;
+}
+
+.cifra-corpo {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 720px) {
+  .musicas-acoes-topo {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .cifra-topo {
+    align-items: flex-start;
+  }
+
+  .cifra-topo .item-detalhe {
+    min-width: calc(100% - 60px);
+  }
+
+  .cifra-acoes-topo {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .cifra-acoes-topo .botao {
+    flex: 1 1 auto;
+  }
+
+  .cifra-controles {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .cifra-controles .tom-barra {
+    width: 100%;
+  }
+
+  .instrumento-afinador {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .afinador-barra {
+    max-width: 100%;
+  }
+}
+
+@media (min-width: 721px) and (max-width: 1050px) {
+  .cifra-controles {
+    gap: 12px;
+  }
+
+  .instrumento-afinador {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+@media print {
+  @page {
+    margin: 18mm;
+  }
+
+  body * {
+    visibility: hidden !important;
+  }
+
+  .cifra-painel,
+  .cifra-painel * {
+    visibility: visible !important;
+  }
+
+  .cifra-painel {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    padding: 0;
+    border: 0;
+    background: #fff;
+    box-shadow: none;
+    color: #111;
+  }
+
+  .cifra-painel .nao-imprimir,
+  .cifra-painel .cifra-ferramentas {
+    display: none !important;
+  }
+
+  .cifra-painel .cifra-topo {
+    margin-bottom: 20px;
+  }
+
+  .cifra-painel .cifra-topo h2,
+  .cifra-painel .cifra-topo p,
+  .cifra-painel .cifra-corpo {
+    color: #111 !important;
+  }
+
+  .cifra-painel .cifra-corpo {
+    overflow: visible;
+    padding: 0;
+    border: 0;
+    background: #fff;
+    font-size: 11pt;
+    white-space: pre-wrap;
+  }
+}

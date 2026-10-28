@@ -1,0 +1,357 @@
+/* Busca de momentos e ajustes responsivos do palco. */
+
+.momento-busca-resultados {
+  position: absolute;
+  z-index: 4;
+  top: 100%;
+  right: 0;
+  left: 0;
+  display: grid;
+  max-height: 220px;
+  overflow-y: auto;
+  padding: 5px;
+  border: 1px solid var(--borda);
+  border-radius: 9px;
+  background: var(--superficie);
+  box-shadow: 0 10px 24px rgba(17, 24, 39, 0.14);
+}
+
+.momento-busca-resultados[hidden] {
+  display: none;
+}
+
+.momento-busca-opcao {
+  display: grid;
+  gap: 3px;
+  padding: 8px 9px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--texto);
+  text-align: left;
+  cursor: pointer;
+}
+
+.momento-busca-opcao:hover,
+.momento-busca-opcao:focus-visible {
+  outline: 0;
+  background: var(--superficie-suave);
+}
+
+.momento-busca-opcao strong {
+  font-size: 10px;
+}
+
+.momento-busca-opcao small,
+.momento-busca-vazio {
+  margin: 0;
+  color: var(--texto-suave);
+  font-size: 9px;
+}
+
+.momento-busca-vazio {
+  padding: 8px 9px;
+}
+
+.momento-musica-aviso {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #a36d10;
+  font-size: 9px;
+  font-weight: 550;
+}
+
+.momento-musica-aviso .icone {
+  width: 12px;
+  height: 12px;
+  flex: 0 0 auto;
+}
+
+.palco-topbar {
+  min-height: 48px;
+  padding: 6px 12px;
+}
+
+.palco-topbar-esquerda,
+.palco-topbar-acoes {
+  gap: 7px;
+}
+
+.palco-menu-botao,
+.palco-info-botao,
+.palco-sair-botao {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 auto;
+  border-radius: 9px;
+  background: var(--superficie-suave);
+  color: var(--texto-secundario);
+}
+
+.palco-topbar-titulo,
+.palco-topbar-acoes > .palco-autor,
+.palco-topbar-acoes > .palco-tom-etiqueta,
+.palco-topbar-acoes > .tema-botao {
+  display: none;
+}
+
+.palco-info-aberta .palco-topbar-titulo {
+  display: grid;
+}
+
+.palco-info-aberta .palco-topbar-acoes > .palco-autor,
+.palco-info-aberta .palco-topbar-acoes > .palco-tom-etiqueta,
+.palco-info-aberta .palco-topbar-acoes > .tema-botao {
+  display: inline-flex;
+}
+
+.palco-info-aberta .palco-topbar {
+  min-height: 70px;
+}
+
+.palco-layout {
+  position: relative;
+  padding-right: 88px;
+}
+
+.palco-scroll-area {
+  padding: 18px 0 18px 18px;
+}
+
+.palco-cifra-conteudo {
+  width: min(100%, 980px);
+  min-height: 100%;
+  padding: 38px clamp(30px, 5vw, 72px) 140px;
+  border: 1px solid var(--borda);
+  border-radius: 8px;
+  background: var(--superficie);
+  box-shadow: 0 12px 36px rgba(17, 24, 39, 0.1);
+}
+
+.palco-cifra {
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.palco-cifra-titulo {
+  display: none;
+}
+
+.palco-info-aberta .palco-cifra-titulo {
+  display: block;
+}
+
+.palco-sequencia {
+  position: fixed;
+  top: 48px;
+  bottom: 0;
+  left: 0;
+  z-index: 8;
+  display: none;
+  width: 285px;
+  min-width: 0;
+  flex: none;
+  box-shadow: 10px 0 30px rgba(17, 24, 39, 0.18);
+}
+
+.palco-info-aberta .palco-sequencia {
+  top: 70px;
+}
+
+.palco-menu-aberto .palco-sequencia {
+  display: flex;
+}
+
+.palco-menu-fundo {
+  position: fixed;
+  z-index: 7;
+  inset: 48px 0 0;
+  border: 0;
+  background: rgba(15, 23, 42, 0.2);
+}
+
+.palco-info-aberta .palco-menu-fundo {
+  top: 70px;
+}
+
+.palco-sequencia-linha {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.palco-sequencia-linha .palco-sequencia-item {
+  min-width: 0;
+  flex: 1;
+}
+
+.palco-comentario-botao {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 0;
+  border-radius: 8px;
+  background: #f3c84b;
+  color: #5a4300;
+  cursor: pointer;
+}
+
+.palco-comentario-botao:hover,
+.palco-comentario-botao.ativo {
+  background: #eab72b;
+}
+
+.palco-comentario-botao .icone {
+  width: 16px;
+  height: 16px;
+}
+
+.palco-comentario {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  left: 0;
+  z-index: 10;
+  padding: 13px 36px 13px 13px;
+  border: 1px solid #e8c34d;
+  border-radius: 10px;
+  background: var(--superficie);
+  box-shadow: 0 10px 25px rgba(17, 24, 39, 0.17);
+}
+
+.palco-comentario > strong {
+  color: #a36d10;
+  font-size: 10px;
+}
+
+.palco-comentario p {
+  margin: 5px 0 0;
+  color: var(--texto-secundario);
+  font-size: 11px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+
+.palco-comentario-fechar {
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  display: grid;
+  width: 24px;
+  height: 24px;
+  place-items: center;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--texto-suave);
+  cursor: pointer;
+}
+
+.palco-comentario-fechar .icone {
+  width: 14px;
+  height: 14px;
+}
+
+@media (max-width: 720px) {
+  .palco-layout {
+    padding-right: 0;
+  }
+
+  .palco-topbar {
+    min-height: 48px;
+    padding: 6px 8px;
+  }
+
+  .palco-info-aberta .palco-topbar {
+    min-height: 62px;
+  }
+
+  .palco-topbar-titulo > strong {
+    max-width: 43vw;
+    font-size: 9px;
+  }
+
+  .palco-topbar-titulo > span {
+    font-size: 7px;
+  }
+
+  .palco-topbar-acoes {
+    gap: 4px;
+  }
+
+  .palco-topbar-acoes > .palco-autor,
+  .palco-topbar-acoes > .tema-botao {
+    display: none !important;
+  }
+
+  .palco-sequencia,
+  .palco-info-aberta .palco-sequencia {
+    top: 48px;
+    width: min(86vw, 300px);
+    min-width: 0;
+    padding: 13px 10px;
+  }
+
+  .palco-info-aberta .palco-menu-fundo {
+    top: 62px;
+  }
+
+  .palco-scroll-area {
+    padding: 8px 8px 105px;
+  }
+
+  .palco-cifra-conteudo {
+    width: 100%;
+    padding: 23px 15px 115px;
+    border-radius: 5px;
+  }
+
+  .palco-cifra-titulo h1 {
+    font-size: 21px;
+  }
+
+  .palco-cifra {
+    padding: 0;
+    font-size: 14px;
+  }
+
+  .palco-controles {
+    right: 50%;
+    bottom: 8px;
+    width: auto;
+    max-height: none;
+    flex-direction: row;
+    gap: 8px;
+    padding: 7px 8px;
+    transform: translateX(50%);
+  }
+}
+
+@media (max-width: 420px) {
+  .palco-controles {
+    gap: 5px;
+    max-width: calc(100vw - 12px);
+  }
+
+  .palco-controle-grupo + .palco-controle-grupo {
+    padding-left: 5px;
+  }
+
+  .palco-controle-fonte {
+    gap: 3px;
+  }
+}
+
+.agenda-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 335px;
+  align-items: start;
+  gap: 18px;
+}
+

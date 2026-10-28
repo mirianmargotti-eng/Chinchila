@@ -23,3 +23,29 @@ Consulte os arquivos gerados para obter os detalhes técnicos do projeto:
 *   `arquitetura_regras.md`: Diretrizes de funcionamento off-line/on-line, interface e regras de negócio.
 *   `estrutura_telas.md`: Mapeamento detalhado de cada tela, navegação por pastas e Modo Imersivo.
 *   `banco_dados.md`: Estrutura-alvo do banco SQLite local e requisitos da sincronização entre dispositivos.
+
+## 🧩 Organização do código
+*   `js/app.js`: estado, navegação, renderização e coordenação das ações.
+*   `js/app/musicas.js`: metrônomo e importação de cifras.
+*   `js/app/agenda.js`: datas e montagem do calendário.
+*   `js/app/pastas.js`: leitura e preparação de capas.
+*   `js/app/palco.js`: rolagem, controles e reordenação no modo palco.
+*   `js/app/inicializacao.js`: inicialização após o carregamento da página.
+*   `js/banco.js`: estado, persistência local, migração e dados de demonstração.
+*   `js/banco/configuracoes.js`: preferências e perfil.
+*   `js/banco/pastas.js`: operações das pastas e vínculos com músicas.
+*   `js/banco/musicas.js`: operações do acervo musical.
+*   `js/banco/repertorios.js`: repertórios, momentos e ordenação.
+*   `js/banco/agenda.js`: operações de lembretes.
+*   `js/componentes.js`: ícones, layout, escape de texto, datas e transposição compartilhados.
+*   `js/componentes/inicio.js`: painel inicial.
+*   `js/componentes/agenda.js`: calendário e lembretes.
+*   `js/componentes/musicas.js`: biblioteca, cadastro, importação e consulta de cifras.
+*   `js/componentes/repertorios.js`: listagem, edição e simulação de repertórios.
+*   `js/componentes/pastas.js`: listagem e detalhe das pastas.
+*   `js/componentes/configuracoes.js`: preferências e prévia de acesso.
+*   `js/componentes/palco.js`: interface de apresentação imersiva.
+*   `css/styles.css`: entrada dos estilos, que importa os módulos temáticos na ordem da cascata.
+*   `css/`: estilos separados para base, início, músicas, repertórios, pastas, configurações, palco, agenda, diálogos e responsividade.
+
+O `index.html` carrega primeiro o banco e seus domínios, depois os componentes e o controlador; a inicialização fica por último para garantir que todas as funções estejam registradas.
