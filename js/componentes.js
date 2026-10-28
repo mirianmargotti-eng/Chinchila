@@ -25,6 +25,8 @@ const Componentes = {
       info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v5m0-8h.01"/>',
       more: '<circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/>',
       close: '<path d="m18 6-12 12M6 6l12 12"/>',
+      menu: '<path d="M4 6h16M4 12h16M4 18h16"/>',
+      message: '<path d="M21 11.5a8.4 8.4 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7a8.4 8.4 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.4 8.4 0 0 1 3.8-.9h.5a8.5 8.5 0 0 1 8 8z"/>',
     };
     return `<svg class="icone ${classe}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${caminhos[nome] || ""}</svg>`;
   },
@@ -114,38 +116,42 @@ const Componentes = {
     `;
   },
 
-  layoutPalco({ celebracao, item, musica, itens, indice, tomAtual, corpo }) {
+  layoutPalco({ celebracao, item, musica, itens, indice, tomAtual, corpo, sidebarAberta, infoAberta, comentarioId }) {
     const sequencia = itens
       .map((linha, i) => {
         const faixa = linha.musica_id ? Banco.obterMusica(linha.musica_id) : null;
         return `
-          <button class="palco-sequencia-item ${i === indice ? "ativo" : ""}" data-acao="simular-ir" data-indice="${i}">
-            <span class="palco-sequencia-numero">${i + 1}</span>
-            <span class="palco-sequencia-detalhe"><strong>${this.escapar(linha.nome_momento || "Momento")}</strong><small>${this.escapar(faixa ? faixa.titulo : "Sem música associada")}</small></span>
-            ${faixa ? `<span class="palco-tom-mini">${this.escapar(faixa.tom_original || "C")}</span>` : ""}
-          </button>`;
+          <div class="palco-sequencia-linha">
+            <button class="palco-sequencia-item ${i === indice ? "ativo" : ""}" data-acao="simular-ir" data-indice="${i}">
+              <span class="palco-sequencia-numero">${i + 1}</span>
+              <span class="palco-sequencia-detalhe"><strong>${this.escapar(linha.nome_momento || "Momento")}</strong><small>${this.escapar(faixa ? faixa.titulo : "Sem música associada")}</small></span>
+              ${faixa ? `<span class="palco-tom-mini">${this.escapar(faixa.tom_original || "C")}</span>` : ""}
+            </button>
+            ${linha.nota_adicional ? `<button type="button" class="palco-comentario-botao ${Number(comentarioId) === linha.id ? "ativo" : ""}" data-acao="abrir-comentario-palco" data-id="${linha.id}" aria-label="Abrir comentário do momento ${i + 1}" title="Ver comentário">${this.icone("message")}</button>` : ""}
+            ${Number(comentarioId) === linha.id ? `<aside class="palco-comentario"><button type="button" class="palco-comentario-fechar" data-acao="fechar-comentario-palco" aria-label="Fechar comentário">${this.icone("close")}</button><strong>Comentário</strong><p>${this.escapar(linha.nota_adicional)}</p></aside>` : ""}
+          </div>`;
       })
       .join("");
     const nomeMomento = item ? item.nome_momento || "Momento" : "Repertório sem momentos";
     const autor = musica ? musica.autor || "" : "";
-    const observacao = item && item.nota_adicional ? `
-      <aside class="palco-observacao"><strong>Observação</strong><p>${this.escapar(item.nota_adicional)}</p></aside>` : "";
 
     return `
-      <div class="palco-app">
+      <div class="palco-app ${sidebarAberta ? "palco-menu-aberto" : ""} ${infoAberta ? "palco-info-aberta" : ""}">
         <header class="palco-topbar">
           <div class="palco-topbar-esquerda">
-            <button class="botao contorno" data-acao="sair-palco">${this.icone("arrowLeft")}<span>Sair do modo palco</span></button>
-            <span class="palco-divisor"></span>
+            <button class="botao-icone palco-menu-botao" data-acao="alternar-menu-palco" aria-label="${sidebarAberta ? "Fechar sequência" : "Abrir sequência"}" aria-expanded="${sidebarAberta}">${this.icone("menu")}</button>
+            <button class="botao-icone palco-info-botao" data-acao="alternar-info-palco" aria-label="${infoAberta ? "Ocultar informações" : "Mostrar informações"}" aria-expanded="${infoAberta}">${this.icone("info")}</button>
             <div class="palco-topbar-titulo"><span><i class="palco-status-ponto"></i>${this.escapar(celebracao.titulo)}</span><strong>${item ? `${indice + 1}. ${this.escapar(nomeMomento)}${musica ? ` — ${this.escapar(musica.titulo)}` : ""}` : "Nenhum momento na sequência"}</strong></div>
           </div>
           <div class="palco-topbar-acoes">
             ${musica && autor ? `<span class="palco-autor">${this.icone("user")}${this.escapar(autor)}</span>` : ""}
             <span class="palco-tom-etiqueta">Tom: <strong>${this.escapar(tomAtual)}</strong></span>
             <button class="botao-icone tema-botao" data-acao="alternar-tema" aria-label="Alternar tema" title="Alternar tema claro ou escuro">${this.icone("sun")}<span>/</span>${this.icone("moon")}</button>
+            <button class="botao-icone palco-sair-botao" data-acao="sair-palco" aria-label="Sair do modo palco" title="Sair do modo palco">${this.icone("arrowLeft")}</button>
           </div>
         </header>
         <div class="palco-layout">
+          ${sidebarAberta ? `<button type="button" class="palco-menu-fundo" data-acao="alternar-menu-palco" aria-label="Fechar sequência"></button>` : ""}
           <aside class="palco-sequencia">
             <div class="palco-sequencia-titulo"><strong>${this.icone("list")} Sequência do repertório</strong><span>${itens.length} ${itens.length === 1 ? "momento" : "momentos"}</span></div>
             <nav class="palco-sequencia-lista">${sequencia || `<p class="texto-apoio">Este repertório ainda não tem momentos. Volte ao editor para adicionar momentos e músicas.</p>`}</nav>
@@ -153,7 +159,6 @@ const Componentes = {
           </aside>
           <main class="palco-scroll-area">
             <article class="palco-cifra-conteudo">
-              ${observacao}
               <header class="palco-cifra-titulo"><span class="sobrelinha">${item ? `MOMENTO ${indice + 1} DE ${itens.length}` : "MODO PALCO"}</span><h1>${this.escapar(musica ? musica.titulo : nomeMomento)}</h1><p>${musica ? `${this.escapar(autor || "Autor não informado")} · Tom original: ${this.escapar(musica.tom_original || "C")}` : "Associe uma música no editor do repertório para exibir a cifra aqui."}</p></header>
               <pre class="cifra-corpo palco-cifra">${corpo}</pre>
             </article>
@@ -423,12 +428,13 @@ const Componentes = {
           <article class="roteiro-card">
             <button class="roteiro-abre" data-acao="abrir-celebracao" data-id="${celebracao.id}">
               <span class="item-icone violeta">${this.icone("list")}</span>
-              <span class="item-detalhe"><strong>${this.escapar(celebracao.titulo)}</strong><small>${this.icone("calendar")} ${this.formatarData(celebracao.data_evento)}</small></span>
+              <span class="item-detalhe"><strong>${this.escapar(celebracao.titulo)}</strong><small>${this.icone("calendar")} ${this.formatarData(celebracao.data_evento)}${celebracao.local ? ` · ${this.escapar(celebracao.local)}` : ""}</small></span>
               ${this.icone("chevron")}
             </button>
             <div class="acoes-linha">
               <button class="botao-icone" data-acao="simular" data-id="${celebracao.id}" aria-label="Simular ${this.escapar(celebracao.titulo)}" title="Modo palco">${this.icone("play")}</button>
               <button class="botao-icone" data-acao="abrir-celebracao" data-id="${celebracao.id}" aria-label="Editar ${this.escapar(celebracao.titulo)}" title="Editar">${this.icone("edit")}</button>
+              <button class="botao-icone" data-acao="clonar-celebracao" data-id="${celebracao.id}" aria-label="Clonar ${this.escapar(celebracao.titulo)}" title="Clonar repertório">${this.icone("list")}</button>
               <button class="botao-icone perigo" data-acao="apagar-celebracao" data-id="${celebracao.id}" aria-label="Apagar ${this.escapar(celebracao.titulo)}" title="Apagar">${this.icone("trash")}</button>
             </div>
           </article>`
@@ -451,30 +457,25 @@ const Componentes = {
     const hojeISO = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, "0")}-${String(hoje.getDate()).padStart(2, "0")}`;
     const c = celebracao || { titulo: "", data_evento: dataInicial || hojeISO };
     const sugestoes = momentos.map((nome) => `<option value="${this.escapar(nome)}"></option>`).join("");
-    const musicasOpcoes = (selecionada) =>
-      [`<option value="">Sem música</option>`]
-        .concat(
-          musicas.map(
-            (musica) =>
-              `<option value="${musica.id}" ${Number(selecionada) === musica.id ? "selected" : ""}>${this.escapar(musica.titulo)}</option>`
-          )
-        )
-        .join("");
     const linhas = itens
       .map(
-        (item) => `
-          <article class="momento-card">
-            <div class="momento-topo"><strong>Momento ${item.posicao_ordem}</strong><div class="acoes-linha">
-              <button type="button" class="botao-icone" data-acao="mover-item" data-id="${item.id}" data-dir="-1" aria-label="Mover momento para cima">${this.icone("arrowLeft", "icone-girar")}</button>
-              <button type="button" class="botao-icone" data-acao="mover-item" data-id="${item.id}" data-dir="1" aria-label="Mover momento para baixo">${this.icone("arrowLeft", "icone-girar-baixo")}</button>
+        (item) => {
+          const musicaSelecionada = item.musica_id ? Banco.obterMusica(item.musica_id) : null;
+          const repeticoes = item.musica_id
+            ? itens.filter((outro) => Number(outro.musica_id) === Number(item.musica_id)).length
+            : 0;
+          return `
+          <article class="momento-card" data-item-id="${item.id}">
+            <div class="momento-topo"><strong><span class="momento-arrastar" tabindex="0" role="button" aria-label="Reordenar momento com arrastar ou pelas setas do teclado" title="Arraste ou use as setas para reordenar">${this.icone("menu")}</span> Momento ${item.posicao_ordem}</strong><div class="acoes-linha">
               <button type="button" class="botao-icone perigo" data-acao="apagar-item" data-id="${item.id}" aria-label="Apagar momento">${this.icone("trash")}</button>
             </div></div>
             <div class="campos-duplos">
               <label>Nome do momento<input list="momentos-padrao" data-campo="nome_momento" data-id="${item.id}" value="${this.escapar(item.nome_momento)}" placeholder="Ex.: Entrada"></label>
-              <label>Música<select data-campo="musica_id" data-id="${item.id}">${musicasOpcoes(item.musica_id)}</select></label>
+              <div class="campo-musica"><label>Música</label><span class="momento-musica-selecionada" data-musica-selecionada="${item.id}">${this.escapar(musicaSelecionada ? musicaSelecionada.titulo : "Nenhuma música selecionada")}</span>${repeticoes > 1 && celebracao ? `<small class="momento-musica-aviso">${this.icone("info")} Música em ${repeticoes} momentos.</small>` : ""}<input type="search" class="momento-busca-musica" data-acao="buscar-musica-momento" data-id="${item.id}" autocomplete="off" placeholder="Buscar por título ou autor..." aria-label="Buscar música para o momento ${item.posicao_ordem}"><div class="momento-busca-resultados" hidden></div></div>
               <label class="campo-largo">Observação<input data-campo="nota_adicional" data-id="${item.id}" value="${this.escapar(item.nota_adicional || "")}" placeholder="Uma observação para este momento (opcional)"></label>
             </div>
-          </article>`
+          </article>`;
+        }
       )
       .join("");
 
@@ -484,13 +485,15 @@ const Componentes = {
           <input type="hidden" name="id" value="${c.id || ""}">
           <input type="hidden" name="retorno_agenda" value="${retornoAgenda ? "true" : "false"}">
           <div class="campos-duplos">
-            <label class="campo-largo">Nome do repertório<input name="titulo" required maxlength="160" value="${this.escapar(c.titulo)}" placeholder="Ex.: Apresentação de sábado"></label>
+            <label>Nome do repertório<input name="titulo" required maxlength="160" value="${this.escapar(c.titulo)}" placeholder="Ex.: Apresentação de sábado"></label>
             <label>Data do evento<input type="date" name="data_evento" value="${this.escapar(c.data_evento)}"></label>
+            <label class="campo-local"><span>Local <small>(opcional)</small></span><input name="local" maxlength="80" value="${this.escapar(c.local || "")}" placeholder="Ex.: Igreja do Centro"></label>
           </div>
           <div class="acoes-form">
             ${retornoAgenda ? `<button type="button" class="botao secundario" data-acao="voltar-agenda">${this.icone("arrowLeft")} Voltar à agenda</button>` : `<button type="button" class="botao secundario" data-acao="navegar" data-tela="celebracoes">Voltar</button>`}
             <button type="submit" class="botao primario">Salvar repertório</button>
             ${c.id ? `<button type="button" class="botao contorno" data-acao="simular" data-id="${c.id}">${this.icone("play")} Modo palco</button>` : ""}
+            ${c.id ? `<button type="button" class="botao contorno" data-acao="clonar-celebracao" data-id="${c.id}">${this.icone("list")} Clonar repertório</button>` : ""}
           </div>
         </form>
       </section>
@@ -500,6 +503,19 @@ const Componentes = {
         ${c.id ? linhas || this.estadoVazio("list", "Nenhum momento adicionado", "Adicione um momento para começar a montar a sequência.", { acao: "adicionar-item", rotulo: "Adicionar momento" }) : `<p class="aviso-info">Salve o repertório para começar a adicionar momentos.</p>`}
       </section>
     `;
+  },
+
+  resultadosBuscaMusica(musicas, itemId, busca) {
+    const termo = busca.trim().toLocaleLowerCase("pt-BR");
+    const encontrados = musicas
+      .filter((musica) => `${musica.titulo} ${musica.autor || ""}`.toLocaleLowerCase("pt-BR").includes(termo))
+      .slice(0, 20);
+    const opcaoSemMusica = `<button type="button" class="momento-busca-opcao" data-acao="selecionar-musica-momento" data-id="${itemId}" data-musica-id=""><strong>Sem música associada</strong></button>`;
+    if (!encontrados.length) return `${opcaoSemMusica}<p class="momento-busca-vazio">Nenhuma música encontrada.</p>`;
+    return opcaoSemMusica + encontrados.map((musica) => `
+      <button type="button" class="momento-busca-opcao" data-acao="selecionar-musica-momento" data-id="${itemId}" data-musica-id="${musica.id}">
+        <strong>${this.escapar(musica.titulo)}</strong>${musica.autor ? `<small>${this.escapar(musica.autor)}</small>` : ""}
+      </button>`).join("");
   },
 
   telaPastas({ pastas, contagens, busca }) {
@@ -527,23 +543,51 @@ const Componentes = {
     `;
   },
 
-  telaConfiguracoes({ perfil, tema, momentos }) {
+  telaConfiguracoes({ perfil, tema, momentos, fonteTexto, mensagem, blocosAbertos = [] }) {
     const temaRotulo = tema === "escuro" ? "Escuro" : "Claro";
+    const momentosTexto = momentos.join("\n");
     return `
-      <section class="painel configuracoes-painel">
-        <div class="secao-cabecalho"><div><h2>Preferências</h2><p>Personalize a aparência do Chinchila neste dispositivo.</p></div></div>
+      <details class="painel configuracoes-painel configuracoes-bloco" data-bloco-config="aparencia" ${blocosAbertos.includes("aparencia") ? "open" : ""}>
+        <summary class="configuracoes-bloco-titulo"><span><strong>Aparência</strong><small>Personalize o visual e os textos do Chinchila.</small></span></summary>
         <div class="preferencia-linha"><span class="preferencia-icone">${this.icone("sun")}</span><span class="item-detalhe"><strong>Aparência</strong><small>Tema atual: ${temaRotulo}</small></span><button class="botao contorno" data-acao="alternar-tema">Alternar tema</button></div>
+        <label class="preferencia-fonte"><span><strong>Fonte dos textos</strong><small>Escolha a tipografia usada na interface.</small></span><select data-acao="selecionar-fonte-texto" aria-label="Fonte dos textos"><option value="padrao" ${fonteTexto === "padrao" ? "selected" : ""}>Padrão Chinchila (Inter / sistema)</option><option value="arial" ${fonteTexto === "arial" ? "selected" : ""}>Arial</option><option value="times" ${fonteTexto === "times" ? "selected" : ""}>Times New Roman</option></select></label>
         <div class="preferencia-linha"><span class="preferencia-icone">${this.icone("user")}</span><span class="item-detalhe"><strong>Perfil local</strong><small>${this.escapar(perfil.nome || "Meu perfil")}</small></span><button class="botao contorno" data-acao="editar-perfil">Editar nome</button></div>
-      </section>
-      <section class="painel configuracoes-painel">
-        <div class="secao-cabecalho"><div><h2>Sugestões de momentos</h2><p>Opções iniciais para ajudar a montar repertórios. Você também pode escrever nomes livres.</p></div></div>
-        <div class="etiquetas-momentos">${momentos.map((momento) => `<span>${this.escapar(momento)}</span>`).join("")}</div>
-        <p class="aviso-info">A edição destas sugestões ainda não está disponível. Os nomes dos momentos nos seus repertórios podem ser alterados normalmente.</p>
-      </section>
-      <section class="painel configuracoes-painel">
-        <div class="secao-cabecalho"><div><h2>Conta e sincronização</h2><p>Esta versão salva os dados somente neste dispositivo.</p></div><button class="botao contorno" data-acao="navegar" data-tela="acesso">Ver prévia da tela de acesso</button></div>
+      </details>
+      <details class="painel configuracoes-painel configuracoes-bloco" data-bloco-config="momentos" ${blocosAbertos.includes("momentos") ? "open" : ""}>
+        <summary class="configuracoes-bloco-titulo"><span><strong>Momentos padrão</strong><small>Defina a sequência inicial dos novos repertórios.</small></span></summary>
+        <form class="formulario formulario-momentos-padrao" data-acao="salvar-momentos-padrao">
+          <label for="momentos-padrao-config">Sequência inicial de momentos</label>
+          <textarea id="momentos-padrao-config" name="momentos" rows="8" placeholder="Entrada&#10;Ofertório&#10;Comunhão&#10;Final">${this.escapar(momentosTexto)}</textarea>
+          <small class="campo-ajuda">Deixe uma linha vazia para remover um momento. Essa alteração não modifica repertórios existentes.</small>
+          <button type="submit" class="botao primario">Salvar momentos padrão</button>
+          ${mensagem ? `<p class="configuracoes-mensagem" role="status">${this.escapar(mensagem)}</p>` : ""}
+        </form>
+      </details>
+      <details class="painel configuracoes-painel configuracoes-bloco" data-bloco-config="reporte" ${blocosAbertos.includes("reporte") ? "open" : ""}>
+        <summary class="configuracoes-bloco-titulo"><span><strong>Reporte de bug</strong><small>Descreva o problema e anexe uma captura de tela, se quiser.</small></span></summary>
+        <form class="formulario formulario-relato" data-acao="relatar-bug">
+          <label>Assunto<input name="assunto" maxlength="120" placeholder="Resumo do problema"></label>
+          <label>Descrição<textarea name="descricao" rows="4" placeholder="O que você esperava e o que aconteceu?"></textarea></label>
+          <label>Captura de tela<input class="relato-arquivo" name="captura" type="file" accept="image/*"><small class="relato-arquivo-nome" aria-live="polite">Nenhuma imagem selecionada.</small></label>
+          <p class="aviso-info">O envio por e-mail ainda não está configurado. Este formulário não envia nem armazena o relato.</p>
+          <button type="button" class="botao primario" disabled>Enviar relato (em breve)</button>
+        </form>
+      </details>
+      <details class="painel configuracoes-painel configuracoes-bloco" data-bloco-config="cores" ${blocosAbertos.includes("cores") ? "open" : ""}>
+        <summary class="configuracoes-bloco-titulo"><span><strong>Cores de cifra</strong><small>Opções futuras para diferenciar partes da cifra.</small></span></summary>
+        <div class="opcoes-cor-cifra">
+          <article><span class="amostra-cor-cifra acordes"></span><strong>Destacar acordes</strong><small>Colorir acordes e manter a letra como está.</small></article>
+          <article><span class="amostra-cor-cifra linhas"></span><strong>Alternar linhas</strong><small>Variar o fundo entre linhas para facilitar o acompanhamento.</small></article>
+          <article><span class="amostra-cor-cifra estrofe"></span><strong>Separar estrofes</strong><small>Usar tons suaves para distinguir partes da música.</small></article>
+          <article><span class="amostra-cor-cifra editor"></span><strong>Editor por blocos</strong><small>Separar acordes e letra durante a edição e montar a cifra sem intercalar linhas manualmente.</small></article>
+        </div>
+        <p class="aviso-info">Estas opções e a ideia de edição por blocos são sugestões para uma próxima etapa. Não alteram a exibição nem o conteúdo das cifras atuais.</p>
+      </details>
+      <details class="painel configuracoes-painel configuracoes-bloco" data-bloco-config="conta" ${blocosAbertos.includes("conta") ? "open" : ""}>
+        <summary class="configuracoes-bloco-titulo"><span><strong>Conta e sincronização</strong><small>Seus dados ficam somente neste dispositivo.</small></span></summary>
+        <button class="botao contorno" data-acao="navegar" data-tela="acesso">Ver prévia da tela de acesso</button>
         <p class="aviso-info">Login e sincronização ainda não estão conectados. A prévia abaixo é apenas visual e não envia seus dados.</p>
-      </section>
+      </details>
     `;
   },
 

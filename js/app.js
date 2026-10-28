@@ -17,22 +17,64 @@ const App = {
   rolagemVelocidade: 1,
   rolagemIntervalo: null,
   tamanhoFontePalco: 16,
+  sidebarPalcoAberta: false,
+  infoPalcoAberta: false,
+  comentarioPalcoId: null,
+  arrastoPonteiro: null,
+  mensagemConfiguracoes: "",
+  blocosConfiguracoesAbertos: [],
 
   iniciar() {
     this.agendaSelecionada = this.dataHojeISO();
     this.aplicarTema(Banco.obterTema());
+    this.aplicarFonteTexto(Banco.obterFonteTexto());
     this.renderizar();
     document.getElementById("app").addEventListener("click", (evento) => this.tratarClique(evento));
     document.getElementById("app").addEventListener("submit", (evento) => this.tratarSubmit(evento));
     document.getElementById("app").addEventListener("change", (evento) => this.tratarChange(evento));
     document.getElementById("app").addEventListener("input", (evento) => this.tratarInput(evento));
+    document.getElementById("app").addEventListener("toggle", (evento) => {
+      const bloco = evento.target.closest("details[data-bloco-config]");
+      if (!bloco) return;
+      const abertos = new Set(this.blocosConfiguracoesAbertos);
+      if (bloco.open) abertos.add(bloco.dataset.blocoConfig);
+      else abertos.delete(bloco.dataset.blocoConfig);
+      this.blocosConfiguracoesAbertos = Array.from(abertos);
+    }, true);
+    document.getElementById("app").addEventListener("pointerdown", (evento) => this.iniciarArrastoMomento(evento));
+    document.getElementById("app").addEventListener("pointermove", (evento) => this.moverArrastoMomento(evento));
+    document.getElementById("app").addEventListener("pointerup", (evento) => this.finalizarArrastoMomento(evento));
+    document.getElementById("app").addEventListener("pointercancel", () => this.limparArrastoMomentos());
     document.getElementById("app").addEventListener("keydown", (evento) => {
       if (evento.key === "Escape" && this.dialogo) this.fecharDialogo();
+      else if (evento.key === "Escape" && this.comentarioPalcoId !== null) {
+        this.comentarioPalcoId = null;
+        this.renderizar();
+      } else if (evento.key === "Escape" && this.sidebarPalcoAberta) {
+        this.sidebarPalcoAberta = false;
+        this.renderizar();
+      } else if (
+        evento.target.matches(".momento-arrastar") &&
+        (evento.key === "ArrowUp" || evento.key === "ArrowDown")
+      ) {
+        evento.preventDefault();
+        const id = Number(evento.target.closest(".momento-card").dataset.itemId);
+        const itens = Banco.listarItens(this.params.id);
+        const indice = itens.findIndex((item) => item.id === id);
+        const destino = indice + (evento.key === "ArrowUp" ? -1 : 1);
+        if (indice < 0 || destino < 0 || destino >= itens.length) return;
+        const ids = itens.map((item) => item.id);
+        ids.splice(destino, 0, ids.splice(indice, 1)[0]);
+        Banco.reordenarItens(this.params.id, ids);
+        this.renderizar();
+        document.querySelector(`.momento-card[data-item-id="${id}"] .momento-arrastar`)?.focus();
+      }
     });
   },
 
   irPara(tela, params = {}) {
     if (this.tela === "simular" && tela !== "simular") this.pararRolagem();
+    if (tela !== "configuracoes") this.mensagemConfiguracoes = "";
     this.tela = tela;
     this.params = params;
     this.renderizar();
@@ -41,6 +83,10 @@ const App = {
   aplicarTema(tema) {
     document.documentElement.dataset.tema = tema;
     Banco.definirTema(tema);
+  },
+
+  aplicarFonteTexto(fonte) {
+    document.documentElement.dataset.fonte = fonte;
   },
 
   abrirDialogo(opcoes, executar) {
@@ -217,6 +263,9 @@ const App = {
         indice: this.simularIndice,
         tomAtual: this.tomAtual,
         corpo: Componentes.escapar(cifra),
+        sidebarAberta: this.sidebarPalcoAberta,
+        infoAberta: this.infoPalcoAberta,
+        comentarioId: this.comentarioPalcoId,
       };
     } else if (this.tela === "pastas") {
       titulo = "Pastas";
@@ -235,6 +284,9 @@ const App = {
         perfil,
         tema: Banco.obterTema(),
         momentos: Banco.momentosPadrao(),
+        fonteTexto: Banco.obterFonteTexto(),
+        mensagem: this.mensagemConfiguracoes,
+        blocosAbertos: this.blocosConfiguracoesAbertos,
       });
     } else if (this.tela === "acesso") {
       titulo = "Acesso à conta";
@@ -401,11 +453,28 @@ const App = {
         this.renderizar();
       },
       "sair-palco": () => this.irPara("celebracao-form", { id: this.params.id }),
+      "alternar-menu-palco": () => {
+        this.sidebarPalcoAberta = !this.sidebarPalcoAberta;
+        this.renderizar();
+      },
+      "alternar-info-palco": () => {
+        this.infoPalcoAberta = !this.infoPalcoAberta;
+        this.renderizar();
+      },
+      "abrir-comentario-palco": () => {
+        this.comentarioPalcoId = Number(id);
+        this.sidebarPalcoAberta = true;
+        this.renderizar();
+      },
+      "fechar-comentario-palco": () => {
+        this.comentarioPalcoId = null;
+        this.renderizar();
+      },
       "alternar-rolagem": () => this.alternarRolagem(),
       "velocidade-rolagem": () => {
         this.rolagemVelocidade = Math.max(
           1,
-          Math.min(5, this.rolagemVelocidade + Number(alvo.dataset.delta))
+          Math.min(20, this.rolagemVelocidade + Number(alvo.dataset.delta))
         );
         this.atualizarControlesPalco();
       },
@@ -465,6 +534,10 @@ const App = {
           this.renderizar();
         });
       },
+      "clonar-celebracao": () => {
+        const copia = Banco.clonarCelebracao(id);
+        if (copia) this.irPara("celebracao-form", { id: copia.id });
+      },
       "adicionar-item": () => {
         const celebracaoId = id || this.params.id;
         if (!celebracaoId) return;
@@ -501,8 +574,20 @@ const App = {
         Banco.reordenarItens(this.params.id, ids);
         this.renderizar();
       },
+      "selecionar-musica-momento": () => {
+        const item = Banco.listarItens(this.params.id).find((linha) => linha.id === Number(id));
+        if (!item) return;
+        Banco.salvarItem({
+          ...item,
+          musica_id: alvo.dataset.musicaId || null,
+        });
+        this.renderizar();
+      },
       simular: () => {
         this.pararRolagem();
+        this.sidebarPalcoAberta = false;
+        this.infoPalcoAberta = false;
+        this.comentarioPalcoId = null;
         const itens = Banco.listarItens(id);
         const primeiro = itens.find((i) => i.musica_id);
         const musica = primeiro ? Banco.obterMusica(primeiro.musica_id) : null;
@@ -512,6 +597,7 @@ const App = {
       },
       "simular-ir": () => {
         this.pararRolagem();
+        this.comentarioPalcoId = null;
         this.simularIndice = Number(alvo.dataset.indice);
         const areaPalco = document.querySelector(".palco-scroll-area");
         if (areaPalco) areaPalco.scrollTop = 0;
@@ -605,10 +691,30 @@ const App = {
         id: dados.get("id"),
         titulo: dados.get("titulo"),
         data_evento: dados.get("data_evento"),
+        local: dados.get("local"),
       });
+      if (!dados.get("id")) {
+        Banco.momentosPadrao().forEach((nome_momento, indice) => {
+          Banco.salvarItem({
+            celebracao_id: salva.id,
+            posicao_ordem: indice + 1,
+            nome_momento,
+            musica_id: null,
+            nota_adicional: "",
+          });
+        });
+      }
       const retornoAgenda = dados.get("retorno_agenda") === "true";
       if (retornoAgenda) this.agendaSelecionada = salva.data_evento;
       this.irPara("celebracao-form", { id: salva.id, retornoAgenda });
+    }
+
+    if (form.dataset.acao === "salvar-momentos-padrao") {
+      const momentos = String(dados.get("momentos") || "").split(/\r?\n/);
+      Banco.definirMomentosPadrao(momentos);
+      this.mensagemConfiguracoes = "Momentos padrão salvos.";
+      this.renderizar();
+      return;
     }
 
     if (form.dataset.acao === "agenda-salvar-lembrete") {
@@ -642,6 +748,19 @@ const App = {
 
   tratarChange(evento) {
     const select = evento.target;
+    if (select.matches('[data-acao="selecionar-fonte-texto"]')) {
+      Banco.definirFonteTexto(select.value);
+      this.aplicarFonteTexto(select.value);
+      this.mensagemConfiguracoes = "Fonte atualizada.";
+      this.renderizar();
+      return;
+    }
+    if (select.matches(".relato-arquivo")) {
+      const nome = select.files && select.files[0] ? select.files[0].name : "";
+      const status = document.querySelector(".relato-arquivo-nome");
+      if (status) status.textContent = nome ? `Imagem selecionada: ${nome}` : "Nenhuma imagem selecionada.";
+      return;
+    }
     if (select.matches(".filtro-select")) {
       this.pastaFiltro = select.value;
       this.renderizar();
@@ -649,6 +768,13 @@ const App = {
   },
 
   tratarInput(evento) {
+    if (evento.target.matches('[data-acao="buscar-musica-momento"]')) {
+      const campo = evento.target.closest(".campo-musica").querySelector(".momento-busca-resultados");
+      const busca = evento.target.value.trim();
+      campo.innerHTML = Componentes.resultadosBuscaMusica(Banco.listarMusicas(), evento.target.dataset.id, busca);
+      campo.hidden = !busca;
+      return;
+    }
     const campo = evento.target.dataset.campo;
     if (!campo) return;
     const id = evento.target.dataset.id;
@@ -657,6 +783,63 @@ const App = {
     Banco.salvarItem({
       ...item,
       [campo]: campo === "musica_id" ? evento.target.value || null : evento.target.value,
+    });
+  },
+
+  iniciarArrastoMomento(evento) {
+    const alca = evento.target.closest(".momento-arrastar");
+    if (!alca || !evento.isPrimary) return;
+    const card = alca.closest(".momento-card");
+    evento.preventDefault();
+    this.arrastoPonteiro = {
+      id: Number(card.dataset.itemId),
+      pointerId: evento.pointerId,
+      x: evento.clientX,
+      y: evento.clientY,
+      ativo: false,
+    };
+    if (alca.setPointerCapture) alca.setPointerCapture(evento.pointerId);
+  },
+
+  moverArrastoMomento(evento) {
+    const arrasto = this.arrastoPonteiro;
+    if (!arrasto || arrasto.pointerId !== evento.pointerId) return;
+    if (!arrasto.ativo && Math.hypot(evento.clientX - arrasto.x, evento.clientY - arrasto.y) < 6) return;
+    arrasto.ativo = true;
+    evento.preventDefault();
+    document.querySelectorAll(".momento-arrastando").forEach((origem) => origem.classList.remove("momento-arrastando"));
+    document.querySelectorAll(".momento-alvo-arrasto").forEach((alvo) => alvo.classList.remove("momento-alvo-arrasto"));
+    document.querySelector(`.momento-card[data-item-id="${arrasto.id}"]`)?.classList.add("momento-arrastando");
+    document.elementFromPoint(evento.clientX, evento.clientY)?.closest(".momento-card")?.classList.add("momento-alvo-arrasto");
+  },
+
+  finalizarArrastoMomento(evento) {
+    const arrasto = this.arrastoPonteiro;
+    if (!arrasto || arrasto.pointerId !== evento.pointerId) return;
+    const destino = arrasto.ativo
+      ? document.elementFromPoint(evento.clientX, evento.clientY)?.closest(".momento-card")
+      : null;
+    this.arrastoPonteiro = null;
+    if (destino) this.reordenarMomentos(arrasto.id, Number(destino.dataset.itemId));
+    this.limparArrastoMomentos();
+  },
+
+  reordenarMomentos(idOrigem, idDestino) {
+    const itens = Banco.listarItens(this.params.id);
+    const ids = itens.map((item) => item.id);
+    const origem = ids.indexOf(idOrigem);
+    const destino = ids.indexOf(idDestino);
+    if (origem !== -1 && destino !== -1 && origem !== destino) {
+      ids.splice(destino, 0, ids.splice(origem, 1)[0]);
+      Banco.reordenarItens(this.params.id, ids);
+      this.renderizar();
+    }
+  },
+
+  limparArrastoMomentos() {
+    this.arrastoPonteiro = null;
+    document.querySelectorAll(".momento-arrastando, .momento-alvo-arrasto").forEach((card) => {
+      card.classList.remove("momento-arrastando", "momento-alvo-arrasto");
     });
   },
 };

@@ -11,6 +11,7 @@ const Banco = {
     lembretes: [],
     config: {
       tema: "claro",
+      fonteTexto: "padrao",
       perfil: { nome: "Meu perfil", email: "" },
       momentosPadrao: [
         "Entrada",
@@ -42,6 +43,12 @@ const Banco = {
           this.estado.lembretes.reduce((proximoId, lembrete) => Math.max(proximoId, lembrete.id + 1), 1);
       }
       this.estado.config = { ...this.estado.config, ...(dados.config || {}) };
+      this.estado.config.momentosPadrao = Array.isArray(this.estado.config.momentosPadrao)
+        ? this.estado.config.momentosPadrao.map((momento) => String(momento || "").trim()).filter(Boolean)
+        : [];
+      if (!["padrao", "arial", "times"].includes(this.estado.config.fonteTexto)) {
+        this.estado.config.fonteTexto = "padrao";
+      }
       this.estado.config.perfil = {
         ...this.estado.config.perfil,
         ...(dados.config && dados.config.perfil ? dados.config.perfil : {}),
@@ -88,6 +95,29 @@ const Banco = {
 
   momentosPadrao() {
     return this.estado.config.momentosPadrao.slice();
+  },
+
+  definirMomentosPadrao(momentos) {
+    this.estado.config.momentosPadrao = momentos
+      .map((momento) => String(momento || "").trim())
+      .filter(Boolean);
+    this.gravar();
+    return this.momentosPadrao();
+  },
+
+  obterFonteTexto() {
+    return ["padrao", "arial", "times"].includes(this.estado.config.fonteTexto)
+      ? this.estado.config.fonteTexto
+      : "padrao";
+  },
+
+  definirFonteTexto(fonte) {
+    if (!["padrao", "arial", "times"].includes(fonte)) {
+      throw new Error("A fonte de texto selecionada não é válida.");
+    }
+    this.estado.config.fonteTexto = fonte;
+    this.gravar();
+    return fonte;
   },
 
   listarPastas() {
@@ -197,6 +227,7 @@ const Banco = {
     const payload = {
       titulo: String(dados.titulo || "").trim(),
       data_evento: dados.data_evento || this._agora().slice(0, 10),
+      local: String(dados.local || "").trim(),
       atualizado_em: this._agora(),
     };
 
@@ -212,6 +243,26 @@ const Banco = {
     this.estado.celebracoes.push(nova);
     this.gravar();
     return nova;
+  },
+
+  clonarCelebracao(id) {
+    const original = this.obterCelebracao(id);
+    if (!original) return null;
+    const copia = this.salvarCelebracao({
+      titulo: `${original.titulo} (cópia)`,
+      data_evento: original.data_evento,
+      local: original.local || "",
+    });
+    this.listarItens(original.id).forEach((item) => {
+      this.salvarItem({
+        celebracao_id: copia.id,
+        posicao_ordem: item.posicao_ordem,
+        nome_momento: item.nome_momento,
+        musica_id: item.musica_id,
+        nota_adicional: item.nota_adicional,
+      });
+    });
+    return copia;
   },
 
   listarLembretes() {
