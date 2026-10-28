@@ -6,6 +6,7 @@ const Componentes = {
       home: '<path d="m3 10 9-7 9 7"/><path d="M5 9v11h14V9"/><path d="M9 20v-6h6v6"/>',
       music: '<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>',
       folder: '<path d="M3 6a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
+      image: '<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/>',
       list: '<path d="M8 6h13M8 12h13M8 18h13"/><path d="M3 6h.01M3 12h.01M3 18h.01"/>',
       settings: '<path d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z"/><path d="m19.4 15 .1.1 1.4 1.1-1.4 2.4-1.7-.6a8 8 0 0 1-1.7 1l-.3 1.8h-2.8l-.3-1.8a8 8 0 0 1-1.7-1l-1.7.6-1.4-2.4 1.4-1.1a7 7 0 0 1 0-2l-1.4-1.1 1.4-2.4 1.7.6a8 8 0 0 1 1.7-1l.3-1.8h2.8l.3 1.8a8 8 0 0 1 1.7 1l1.7-.6 1.4 2.4-1.4 1.1a7 7 0 0 1 0 2z"/>',
       search: '<circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/>',
@@ -372,14 +373,13 @@ const Componentes = {
       </nav>` : "";
     const linhas = musicas
       .map((musica) => {
-        const pasta = pastas.find((item) => item.id === musica.pasta_id);
         return `
           <tr>
             <td><button class="botao-icone favorito-botao ${musica.is_fixada ? "favorito-ativo" : ""}" data-acao="favoritar" data-id="${musica.id}" aria-label="${musica.is_fixada ? "Remover dos favoritos" : "Adicionar aos favoritos"}" title="${musica.is_fixada ? "Remover dos favoritos" : "Adicionar aos favoritos"}">${this.icone("star")}</button></td>
             <td><button class="musica-titulo" data-acao="abrir-cifra" data-id="${musica.id}"><span class="mini-icone">${this.icone("music")}</span><span><strong>${this.escapar(musica.titulo)}</strong><small>${this.escapar(musica.tom_original || "C")}</small></span></button></td>
             <td>${this.escapar(musica.autor || "—")}</td>
             <td><span class="tom-etiqueta">${this.escapar(musica.tom_original || "C")}</span></td>
-            <td>${this.escapar(pasta ? pasta.nome : "Sem pasta")}</td>
+            <td>${this.escapar((Banco.idsPastasDaMusica(musica).map((id) => Banco.obterPasta(id)?.nome).filter(Boolean).join(", ")) || "Sem pasta")}</td>
             <td><div class="acoes-linha">
               <button class="botao-icone" data-acao="editar-musica" data-id="${musica.id}" aria-label="Editar ${this.escapar(musica.titulo)}" title="Editar">${this.icone("edit")}</button>
               <button class="botao-icone" data-acao="clonar-musica" data-id="${musica.id}" aria-label="Clonar ${this.escapar(musica.titulo)}" title="Clonar música">${this.icone("copy")}</button>
@@ -559,14 +559,10 @@ const Componentes = {
       .filter((pasta) => pasta.nome.toLowerCase().includes(String(busca || "").trim().toLowerCase()))
       .map(
         (pasta) => `
-          <article class="pasta-card">
-            <div class="pasta-card-topo"><span class="pasta-icone">${this.icone("folder")}</span><div class="acoes-linha">
-              <button class="botao-icone" data-acao="renomear-pasta" data-id="${pasta.id}" aria-label="Renomear ${this.escapar(pasta.nome)}" title="Renomear">${this.icone("edit")}</button>
-              <button class="botao-icone perigo" data-acao="apagar-pasta" data-id="${pasta.id}" aria-label="Apagar ${this.escapar(pasta.nome)}" title="Apagar">${this.icone("trash")}</button>
-            </div></div>
-            <button class="pasta-abre" data-acao="abrir-pasta" data-id="${pasta.id}"><strong>${this.escapar(pasta.nome)}</strong><span>${contagens[pasta.id] || 0} ${(contagens[pasta.id] || 0) === 1 ? "música" : "músicas"}</span></button>
-            <button class="pasta-link" data-acao="abrir-pasta" data-id="${pasta.id}">Ver músicas ${this.icone("chevron")}</button>
-          </article>`
+          <button class="pasta-card" data-acao="abrir-pasta" data-id="${pasta.id}">
+            <span class="pasta-capa-mini">${pasta.capa ? `<img src="${this.escapar(pasta.capa)}" alt="">` : this.icone("folder")}</span>
+            <span class="pasta-abre"><strong>${this.escapar(pasta.nome)}</strong><span>${contagens[pasta.id] || 0} ${(contagens[pasta.id] || 0) === 1 ? "música" : "músicas"}</span></span>
+          </button>`
       )
       .join("");
     const encontrouPastas = pastas.some((pasta) =>
@@ -576,6 +572,54 @@ const Componentes = {
     return `
       <section class="filtros-linha"><form class="busca-form" data-acao="filtrar-pastas">${this.icone("search")}<input name="busca" type="search" placeholder="Buscar pasta..." value="${this.escapar(busca || "")}" aria-label="Buscar pasta"></form><p class="texto-apoio">Organize suas músicas por categoria ou gênero.</p></section>
       <section class="grade-pastas">${cards || this.estadoVazio("folder", busca && pastas.length ? "Nenhuma pasta encontrada" : "Você ainda não criou pastas", busca && pastas.length ? "Tente buscar por outro nome." : "Crie pastas para agrupar músicas do seu jeito.", busca ? null : { acao: "criar-pasta", rotulo: "Criar primeira pasta" })}</section>
+    `;
+  },
+
+  telaDetalhePasta({ pasta, musicas, totalMusicas, musicasDisponiveis, buscaMusicas, buscaAdicionar, musicasSelecionadas, adicaoAberta }) {
+    const musicasHtml = musicas.map((musica) => `
+      <article class="pasta-musica-item">
+        <button class="pasta-musica-detalhe" data-acao="abrir-cifra" data-id="${musica.id}">
+          <span class="mini-icone">${this.icone("music")}</span>
+          <span><strong>${this.escapar(musica.titulo)}</strong><small>${this.escapar(musica.autor || "Autor não informado")} · ${this.escapar(musica.tom_original || "C")}</small></span>
+        </button>
+        <button class="botao contorno pasta-remover-musica" data-acao="remover-musica-pasta" data-id="${musica.id}" aria-label="Remover ${this.escapar(musica.titulo)} desta pasta">Remover</button>
+      </article>`).join("");
+    const disponiveisHtml = musicasDisponiveis.map((musica) => `
+      <label class="pasta-selecao-musica">
+        <input type="checkbox" name="musicas" value="${musica.id}" data-selecao-pasta ${musicasSelecionadas.includes(musica.id) ? "checked" : ""}>
+        <span>${this.escapar(musica.titulo)}</span>
+      </label>`).join("");
+
+    return `
+      <button class="link-botao voltar-link" data-acao="voltar-pastas">${this.icone("arrowLeft")} Voltar às pastas</button>
+      <section class="painel pasta-detalhe">
+        <header class="pasta-detalhe-cabecalho">
+          <div class="pasta-capa-grande">${pasta.capa ? `<img src="${this.escapar(pasta.capa)}" alt="Capa da pasta ${this.escapar(pasta.nome)}">` : this.icone("folder")}</div>
+          <div class="pasta-detalhe-titulo"><span class="sobrelinha">PASTA</span><h2>${this.escapar(pasta.nome)}</h2><p>${totalMusicas} ${totalMusicas === 1 ? "música" : "músicas"} nesta pasta</p></div>
+          <button class="botao contorno perigo" data-acao="apagar-pasta" data-id="${pasta.id}">${this.icone("trash")} Excluir pasta</button>
+        </header>
+        <form class="pasta-edicao" data-acao="salvar-pasta-detalhe">
+          <input type="hidden" name="id" value="${pasta.id}">
+          <label>Nome da pasta<input name="nome" required maxlength="80" value="${this.escapar(pasta.nome)}"></label>
+          <label class="pasta-capa-campo"><span>Capa personalizada</span><input type="file" name="capa" accept="image/*"><small>Escolha uma imagem do seu dispositivo.</small></label>
+          <div class="pasta-edicao-acoes"><button type="submit" class="botao primario">${this.icone("edit")} Salvar pasta</button>${pasta.capa ? `<button type="button" class="botao contorno" data-acao="remover-capa-pasta" data-id="${pasta.id}">Remover capa</button>` : ""}</div>
+        </form>
+      </section>
+      <section class="painel pasta-conteudo">
+        <header class="secao-cabecalho"><div><h2>Músicas da pasta</h2><p>Pesquise no acervo ou adicione músicas em grupo.</p></div><button class="botao primario" data-acao="alternar-adicao-pasta">${this.icone("plus")} ${adicaoAberta ? "Fechar seleção" : "Adicionar músicas"}</button></header>
+        ${adicaoAberta ? `
+          <div class="pasta-selecao">
+            <form class="busca-form pasta-busca-adicionar" data-acao="filtrar-adicao-pasta">${this.icone("search")}<input name="busca_adicionar" type="search" value="${this.escapar(buscaAdicionar)}" placeholder="Buscar música para adicionar..." aria-label="Buscar músicas para adicionar"></form>
+            <form data-acao="adicionar-musicas-pasta">
+              <div class="pasta-selecao-lista">${disponiveisHtml || `<p class="texto-apoio">${buscaAdicionar ? "Nenhuma música disponível com esse nome." : "Todas as músicas cadastradas já estão nesta pasta."}</p>`}</div>
+              <div class="pasta-selecao-acoes"><span>${musicasSelecionadas.length} selecionada(s)</span><button type="submit" class="botao primario" ${musicasSelecionadas.length ? "" : "disabled"}>Adicionar selecionadas</button></div>
+            </form>
+          </div>` : ""}
+        <form class="busca-form pasta-busca-musicas" data-acao="filtrar-musicas-pasta">
+          ${this.icone("search")}<input name="busca_musicas" type="search" value="${this.escapar(buscaMusicas)}" placeholder="Pesquisar música nesta pasta..." aria-label="Pesquisar músicas nesta pasta">
+        </form>
+        <div class="pasta-musicas-lista">${musicasHtml || `<p class="texto-apoio">${buscaMusicas ? "Nenhuma música encontrada nesta pasta." : "Esta pasta ainda não tem músicas. Use “Adicionar músicas” para começar."}</p>`}</div>
+      </section>
     `;
   },
 

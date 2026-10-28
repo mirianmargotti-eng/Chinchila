@@ -9,6 +9,10 @@ const App = {
   pastaFiltro: "",
   paginaMusicas: 1,
   musicasPorPagina: 6,
+  buscaMusicasPasta: "",
+  buscaAdicionarPasta: "",
+  adicaoPastaAberta: false,
+  musicasSelecionadasPasta: [],
   importacaoAberta: false,
   metronomoAtivo: false,
   metronomoBpm: 80,
@@ -379,7 +383,10 @@ const App = {
       html = Componentes.telaCifra({
         musica,
         tomAtual: this.tomAtual,
-        pastaNome: (Banco.obterPasta(musica.pasta_id) || {}).nome,
+        pastaNome: Banco.idsPastasDaMusica(musica)
+          .map((id) => Banco.obterPasta(id)?.nome)
+          .filter(Boolean)
+          .join(", ") || "Sem pasta",
         metronomoAtivo: this.metronomoAtivo,
         bpm: this.metronomoBpm,
       });
@@ -437,9 +444,33 @@ const App = {
       rotuloCriar = "Nova pasta";
       const contagens = {};
       Banco.listarMusicas().forEach((m) => {
-        if (m.pasta_id) contagens[m.pasta_id] = (contagens[m.pasta_id] || 0) + 1;
+        Banco.idsPastasDaMusica(m).forEach((id) => {
+          contagens[id] = (contagens[id] || 0) + 1;
+        });
       });
       html = Componentes.telaPastas({ pastas: Banco.listarPastas(), contagens, busca: this.buscaPastas });
+    } else if (this.tela === "pasta-detalhe") {
+      const pasta = Banco.obterPasta(this.params.id);
+      if (!pasta) return this.irPara("pastas");
+      titulo = pasta.nome;
+      descricao = "Gerencie a capa, as músicas e os detalhes desta pasta.";
+      telaAtiva = "pastas";
+      const musicasDaPasta = Banco.listarMusicas({
+        busca: this.buscaMusicasPasta,
+        pasta_id: pasta.id,
+      });
+      const musicasSelecionadas = this.musicasSelecionadasPasta.map(Number);
+      html = Componentes.telaDetalhePasta({
+        pasta,
+        musicas: musicasDaPasta,
+        totalMusicas: Banco.listarMusicas({ pasta_id: pasta.id }).length,
+        musicasDisponiveis: Banco.listarMusicas({ busca: this.buscaAdicionarPasta })
+          .filter((musica) => !Banco.idsPastasDaMusica(musica).includes(pasta.id)),
+        buscaMusicas: this.buscaMusicasPasta,
+        buscaAdicionar: this.buscaAdicionarPasta,
+        musicasSelecionadas,
+        adicaoAberta: this.adicaoPastaAberta,
+      });
     } else if (this.tela === "configuracoes") {
       titulo = "Configurações";
       descricao = "Preferências da sua experiência no Chinchila.";
@@ -532,6 +563,35 @@ const App = {
     if (tamanhoFonte) tamanhoFonte.textContent = `${this.tamanhoFontePalco}px`;
     const cifra = document.querySelector(".palco-cifra");
     if (cifra) cifra.style.fontSize = `${this.tamanhoFontePalco}px`;
+  },
+
+  async lerCapaPasta(arquivo) {
+    if (!arquivo || !arquivo.type.startsWith("image/")) {
+      throw new Error("Selecione um arquivo de imagem válido para a capa.");
+    }
+    if (arquivo.size > 12 * 1024 * 1024) {
+      throw new Error("A imagem deve ter no máximo 12 MB.");
+    }
+    const origem = await new Promise((resolve, reject) => {
+      const leitor = new FileReader();
+      leitor.onload = () => resolve(leitor.result);
+      leitor.onerror = () => reject(new Error("Não foi possível ler a imagem selecionada."));
+      leitor.readAsDataURL(arquivo);
+    });
+    const imagem = await new Promise((resolve, reject) => {
+      const elemento = new Image();
+      elemento.onload = () => resolve(elemento);
+      elemento.onerror = () => reject(new Error("O arquivo selecionado não contém uma imagem válida."));
+      elemento.src = origem;
+    });
+    const escala = Math.min(1, 720 / Math.max(imagem.width, imagem.height));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.max(1, Math.round(imagem.width * escala));
+    canvas.height = Math.max(1, Math.round(imagem.height * escala));
+    const contexto = canvas.getContext("2d");
+    if (!contexto) throw new Error("Não foi possível preparar a imagem da capa.");
+    contexto.drawImage(imagem, 0, 0, canvas.width, canvas.height);
+    return canvas.toDataURL("image/jpeg", 0.82);
   },
 
   tratarClique(evento) {
@@ -791,34 +851,40 @@ const App = {
           this.irPara("pastas");
         });
       },
-      "renomear-pasta": () => {
-        const pasta = Banco.obterPasta(id);
-        this.abrirDialogo({
-          titulo: "Renomear pasta",
-          mensagem: "Digite o novo nome para esta pasta.",
-          tipo: "entrada",
-          valorInicial: pasta ? pasta.nome : "",
-          placeholder: "Nome da pasta",
-          confirmacao: "Salvar nome",
-        }, (nome) => {
-          if (nome.trim()) Banco.atualizarPasta(id, nome.trim());
-          this.renderizar();
-        });
-      },
       "apagar-pasta": () => {
         this.abrirDialogo({
           titulo: "Apagar pasta",
-          mensagem: "As músicas desta pasta não serão excluídas; elas ficarão sem pasta.",
+          mensagem: "A pasta e seus vínculos serão removidos. As músicas continuarão no acervo e em quaisquer outras pastas.",
           confirmacao: "Apagar pasta",
           perigo: true,
         }, () => {
           Banco.apagarPasta(id);
-          this.renderizar();
+          this.adicaoPastaAberta = false;
+          this.musicasSelecionadasPasta = [];
+          this.irPara("pastas");
         });
       },
       "abrir-pasta": () => {
-        this.pastaFiltro = String(id);
-        this.irPara("musicas");
+        this.buscaMusicasPasta = "";
+        this.buscaAdicionarPasta = "";
+        this.adicaoPastaAberta = false;
+        this.musicasSelecionadasPasta = [];
+        this.irPara("pasta-detalhe", { id });
+      },
+      "voltar-pastas": () => this.irPara("pastas"),
+      "alternar-adicao-pasta": () => {
+        this.adicaoPastaAberta = !this.adicaoPastaAberta;
+        this.buscaAdicionarPasta = "";
+        this.musicasSelecionadasPasta = [];
+        this.renderizar();
+      },
+      "remover-musica-pasta": () => {
+        Banco.removerMusicaDaPasta(this.params.id, id);
+        this.renderizar();
+      },
+      "remover-capa-pasta": () => {
+        Banco.atualizarPasta(this.params.id, { capa: "" });
+        this.renderizar();
       },
     };
 
@@ -836,6 +902,34 @@ const App = {
 
     if (form.dataset.acao === "confirmar-dialogo") {
       this.confirmarDialogo(String(dados.get("valor") || ""));
+      return;
+    }
+
+    if (form.dataset.acao === "salvar-pasta-detalhe") {
+      const arquivo = dados.get("capa");
+      try {
+        const capa = arquivo instanceof File && arquivo.size ? await this.lerCapaPasta(arquivo) : undefined;
+        const alteracoes = { nome: String(dados.get("nome") || "").trim() };
+        if (capa !== undefined) alteracoes.capa = capa;
+        Banco.atualizarPasta(dados.get("id"), alteracoes);
+        this.renderizar();
+      } catch (erro) {
+        const envioDeCapa = arquivo instanceof File && arquivo.size;
+        this.abrirDialogo({
+          titulo: envioDeCapa ? "Não foi possível salvar a capa" : "Não foi possível salvar a pasta",
+          mensagem: erro.message || "Ocorreu um erro ao salvar as alterações.",
+          confirmacao: "Entendi",
+        });
+      }
+      return;
+    }
+
+    if (form.dataset.acao === "adicionar-musicas-pasta") {
+      Banco.adicionarMusicasNaPasta(this.params.id, this.musicasSelecionadasPasta);
+      this.musicasSelecionadasPasta = [];
+      this.adicaoPastaAberta = false;
+      this.buscaAdicionarPasta = "";
+      this.renderizar();
       return;
     }
 
@@ -921,6 +1015,16 @@ const App = {
       this.renderizar();
     }
 
+    if (form.dataset.acao === "filtrar-musicas-pasta") {
+      this.buscaMusicasPasta = String(dados.get("busca_musicas") || "");
+      this.renderizar();
+    }
+
+    if (form.dataset.acao === "filtrar-adicao-pasta") {
+      this.buscaAdicionarPasta = String(dados.get("busca_adicionar") || "");
+      this.renderizar();
+    }
+
     if (form.dataset.acao === "filtrar-celebracoes") {
       this.buscaCelebracoes = String(dados.get("busca") || "");
       this.renderizar();
@@ -928,6 +1032,18 @@ const App = {
   },
 
   tratarChange(evento) {
+    if (evento.target.matches("[data-selecao-pasta]")) {
+      const id = Number(evento.target.value);
+      const selecionadas = new Set(this.musicasSelecionadasPasta.map(Number));
+      if (evento.target.checked) selecionadas.add(id);
+      else selecionadas.delete(id);
+      this.musicasSelecionadasPasta = [...selecionadas];
+      const resumo = document.querySelector(".pasta-selecao-acoes span");
+      const botao = document.querySelector('.pasta-selecao-acoes button[type="submit"]');
+      if (resumo) resumo.textContent = `${selecionadas.size} selecionada(s)`;
+      if (botao) botao.disabled = selecionadas.size === 0;
+      return;
+    }
     const select = evento.target;
     if (select.matches(".filtro-select")) {
       this.pastaFiltro = select.value;

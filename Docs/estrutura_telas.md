@@ -20,10 +20,11 @@ Na barra lateral, as telas são agrupadas por área: Principal, Módulo Música 
 *   **Lembretes e anotações:** Cadastro, edição e exclusão de lembretes locais com título, data e observação. Eles ficam visíveis no dia selecionado e, quando próximos, também aparecem no início.
 
 ## 3. Tela de Pastas (Nova)
-*   **Biblioteca de Categorias:** Lista ou grelha visual exibindo as pastas criadas pelo utilizador (ex: "Igreja da Mãe", "Pop Rock", "Sertanejo Antigo").
-*   **Navegação:** Ao clicar em uma pasta, o utilizador é levado para a listagem filtrada contendo as músicas associadas àquela categoria.
-*   **Adicionar músicas em lote:** Dentro de uma pasta, permitir selecionar várias músicas existentes no acervo e associá-las à pasta de uma só vez. A mesma música pode estar em mais de uma pasta; adicioná-la a uma pasta não remove suas outras associações.
-*   **Excluir pasta:** Remove a pasta e suas associações, sem excluir as músicas do acervo.
+*   **Biblioteca de Categorias:** A lista geral mostra a capa, o nome e a quantidade de músicas de cada pasta.
+*   **Tela própria da pasta:** Exibe capa personalizada, nome, busca das músicas vinculadas e ações para renomear ou excluir a pasta.
+*   **Adicionar músicas em lote:** Uma lista simples permite pesquisar e selecionar várias músicas do acervo para adicioná-las de uma só vez. Uma música pode pertencer a mais de uma pasta.
+*   **Remover música da pasta:** Desvincula a música da pasta sem apagá-la do acervo ou de outras pastas.
+*   **Excluir pasta:** Remove a pasta e somente seu vínculo com as músicas, sem excluir as músicas do acervo.
 
 ## 4. Tela de Músicas (O Grande Acervo)
 *   **Lista Geral:** Exibição de todas as músicas salvas na memória local.
