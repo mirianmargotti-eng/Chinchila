@@ -1,5 +1,3 @@
-/* Recursos de aplicação: musicas. */
-
 Object.assign(App, {
   atualizarControlesMetronomo() {
     const botao = document.querySelector('[data-acao="metronomo-toggle"]');

@@ -1,4 +1,3 @@
-/* Componentes da tela de pastas. */
 
 Object.assign(Componentes, {
   telaPastas({ pastas, contagens, busca }) {

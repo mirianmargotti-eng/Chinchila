@@ -1,5 +1,3 @@
-/* Componentes da tela de inicio. */
-
 Object.assign(Componentes, {
   telaInicio({ proximosRepertorios, proximosLembretes, favoritas, totalMusicas, totalPastas, totalCelebracoes }) {
     const agendaProxima = [

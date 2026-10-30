@@ -1,5 +1,3 @@
-/* Operações de dados: agenda. */
-
 Object.assign(Banco, {
   listarLembretes() {
     return this.estado.lembretes.slice().sort((a, b) => {

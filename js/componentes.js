@@ -1,5 +1,3 @@
-/* Utilitários visuais e funções compartilhadas entre as telas. */
-
 const Componentes = {
   icone(nome, classe = "") {
     const caminhos = {

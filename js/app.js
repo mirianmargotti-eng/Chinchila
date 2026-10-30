@@ -1,5 +1,3 @@
-/* Gerenciador de navegação entre as telas */
-
 const App = {
   tela: "inicio",
   params: {},

@@ -1,5 +1,3 @@
-/* Operações de dados: repertorios. */
-
 Object.assign(Banco, {
   listarCelebracoes() {
     return this.estado.celebracoes.slice().sort((a, b) => {

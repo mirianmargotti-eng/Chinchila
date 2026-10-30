@@ -1,4 +1,3 @@
-  
 const Banco = {
   chave: "chinchila.v1",
 

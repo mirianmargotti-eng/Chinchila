@@ -1,5 +1,3 @@
-/* Componentes da tela de repertorios. */
-
 Object.assign(Componentes, {
   telaCelebracoes({ celebracoes, busca }) {
     const cards = celebracoes
@@ -72,7 +70,7 @@ Object.assign(Componentes, {
           <div class="acoes-form">
             ${retornoAgenda ? `<button type="button" class="botao secundario" data-acao="voltar-agenda">${this.icone("arrowLeft")} Voltar à agenda</button>` : `<button type="button" class="botao secundario" data-acao="navegar" data-tela="celebracoes">Voltar</button>`}
             <button type="submit" class="botao primario">Salvar repertório</button>
-            ${c.id ? `<button type="button" class="botao contorno" data-acao="simular" data-id="${c.id}">${this.icone("play")} Modo palco</button>` : ""}
+            ${c.id ? `<button type="button" class="botao contorno" data-acao="simular" data-id="${c.id}">${this.icone("play")} Imersão </button>` : ""}
             ${c.id ? `<button type="button" class="botao contorno" data-acao="clonar-celebracao" data-id="${c.id}">${this.icone("list")} Clonar repertório</button>` : ""}
           </div>
         </form>

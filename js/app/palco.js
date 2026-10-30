@@ -1,5 +1,3 @@
-/* Recursos de aplicação: palco. */
-
 Object.assign(App, {
   alternarRolagem() {
     if (this.rolagemAtiva) {

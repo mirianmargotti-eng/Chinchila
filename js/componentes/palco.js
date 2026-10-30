@@ -1,5 +1,3 @@
-/* Componentes da tela de palco. */
-
 Object.assign(Componentes, {
   layoutPalco({ celebracao, item, musica, itens, indice, tomAtual, corpo, sidebarAberta, infoAberta, comentarioId }) {
     const sequencia = itens

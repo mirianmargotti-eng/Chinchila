@@ -1,5 +1,3 @@
-/* Componentes da tela de musicas. */
-
 Object.assign(Componentes, {
   telaMusicas({ musicas, pastas, busca, pastaId, total, pagina, totalPaginas, paginaTamanho }) {
     const opcoes = [`<option value="">Todas as pastas</option>`]

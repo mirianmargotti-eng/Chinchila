@@ -1,5 +1,3 @@
-/* Operações de dados: pastas. */
-
 Object.assign(Banco, {
   listarPastas() {
     return this.estado.pastas.slice().sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));

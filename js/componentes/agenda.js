@@ -1,5 +1,3 @@
-/* Componentes da tela de agenda. */
-
 Object.assign(Componentes, {
   telaAgenda({ mes, dias, selecionada, repertorios, lembretes, editorLembrete }) {
     const nomesDias = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];

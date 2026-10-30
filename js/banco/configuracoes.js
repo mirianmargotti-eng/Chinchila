@@ -1,5 +1,3 @@
-/* Operações de dados: configuracoes. */
-
 Object.assign(Banco, {
   obterTema() {
     return this.estado.config.tema || "claro";

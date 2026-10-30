@@ -1,5 +1,3 @@
-/* Operações de dados: musicas. */
-
 Object.assign(Banco, {
   listarMusicas({ busca = "", pasta_id = null, apenasFixadas = false } = {}) {
     const termo = busca.trim().toLowerCase();

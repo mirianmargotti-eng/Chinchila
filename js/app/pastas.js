@@ -1,5 +1,3 @@
-/* Recursos de aplicação: pastas. */
-
 Object.assign(App, {
   async lerCapaPasta(arquivo) {
     if (!arquivo || !arquivo.type.startsWith("image/")) {

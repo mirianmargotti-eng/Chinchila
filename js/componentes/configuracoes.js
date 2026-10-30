@@ -1,5 +1,3 @@
-/* Componentes da tela de configuracoes. */
-
 Object.assign(Componentes, {
   telaConfiguracoes({ perfil, tema, momentos, fonteTexto, mensagem, blocosAbertos = [] }) {
     const temaRotulo = tema === "escuro" ? "Escuro" : "Claro";

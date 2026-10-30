@@ -1,5 +1,3 @@
-/* Recursos de aplicação: agenda. */
-
 Object.assign(App, {
   dataISO(data) {
     const ano = data.getFullYear();
