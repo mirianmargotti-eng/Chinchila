@@ -1,0 +1,274 @@
+/* Listagem, edição e detalhe de pastas. */
+
+.grade-pastas {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 14px;
+}
+
+.pasta-card {
+  display: grid;
+  justify-items: start;
+  gap: 12px;
+  min-height: 0;
+  padding: 16px;
+  border: 1px solid var(--borda);
+  border-radius: 15px;
+  background: var(--superficie);
+  box-shadow: var(--sombra);
+  color: var(--texto);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 150ms ease, transform 150ms ease;
+}
+
+.pasta-card:hover {
+  border-color: color-mix(in srgb, var(--marca) 35%, var(--borda));
+  transform: translateY(-2px);
+}
+
+.pasta-capa-mini {
+  position: relative;
+  display: grid;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  place-items: center;
+  border-radius: 11px;
+  background: var(--violeta-suave);
+  color: var(--violeta);
+}
+
+.pasta-capa-mini .icone {
+  width: 30px;
+  height: 30px;
+}
+
+.pasta-capa-mini img,
+.pasta-capa-grande img {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.pasta-abre {
+  display: grid;
+  gap: 4px;
+}
+
+.pasta-abre strong {
+  font-size: 13px;
+}
+
+.pasta-abre span {
+  color: var(--texto-suave);
+  font-size: 10px;
+}
+
+.pasta-detalhe,
+.pasta-conteudo {
+  display: grid;
+  gap: 18px;
+  max-width: 1000px;
+}
+
+.pasta-detalhe-cabecalho {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.pasta-capa-grande {
+  position: relative;
+  display: grid;
+  width: 112px;
+  height: 112px;
+  flex: 0 0 auto;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 14px;
+  background: var(--violeta-suave);
+  color: var(--violeta);
+}
+
+.pasta-capa-grande .icone {
+  width: 34px;
+  height: 34px;
+}
+
+.pasta-detalhe-titulo {
+  flex: 1;
+  min-width: 0;
+}
+
+.pasta-detalhe-titulo h2 {
+  margin: 4px 0;
+  font-size: 20px;
+  overflow-wrap: anywhere;
+}
+
+.pasta-detalhe-titulo p {
+  margin: 0;
+  color: var(--texto-suave);
+  font-size: 11px;
+}
+
+.pasta-edicao {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) minmax(180px, 1fr) auto;
+  align-items: end;
+  gap: 12px;
+  padding-top: 16px;
+  border-top: 1px solid var(--borda);
+}
+
+.pasta-edicao > label,
+.pasta-capa-campo {
+  display: grid;
+  gap: 7px;
+  color: var(--texto-secundario);
+  font-size: 11px;
+}
+
+.pasta-edicao input[type="text"],
+.pasta-edicao input:not([type]) {
+  width: 100%;
+  min-height: 38px;
+  padding: 8px 10px;
+  border: 1px solid var(--borda);
+  border-radius: 9px;
+  background: var(--superficie);
+  color: var(--texto);
+}
+
+.pasta-capa-campo input {
+  max-width: 100%;
+  font-size: 10px;
+}
+
+.pasta-capa-campo small {
+  color: var(--texto-suave);
+  font-size: 9px;
+}
+
+.pasta-edicao-acoes {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.pasta-musicas-lista {
+  display: grid;
+  gap: 8px;
+}
+
+.pasta-musica-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--borda);
+  border-radius: 11px;
+  background: var(--superficie);
+}
+
+.pasta-musica-detalhe {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  align-items: center;
+  gap: 10px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--texto);
+  text-align: left;
+  cursor: pointer;
+}
+
+.pasta-musica-detalhe > span:last-child {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+
+.pasta-musica-detalhe strong {
+  overflow: hidden;
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pasta-musica-detalhe small {
+  color: var(--texto-suave);
+  font-size: 9px;
+}
+
+.pasta-remover-musica {
+  min-height: 30px;
+  padding: 0 9px;
+  font-size: 10px;
+}
+
+.pasta-busca-musicas,
+.pasta-busca-adicionar {
+  max-width: 520px;
+}
+
+.pasta-selecao {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid var(--borda);
+  border-radius: 12px;
+  background: var(--superficie-suave);
+}
+
+.pasta-selecao-lista {
+  display: grid;
+  max-height: 260px;
+  gap: 2px;
+  overflow: auto;
+}
+
+.pasta-selecao-musica {
+  display: flex;
+  min-height: 36px;
+  align-items: center;
+  gap: 9px;
+  padding: 6px 8px;
+  border-radius: 7px;
+  color: var(--texto);
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.pasta-selecao-musica:hover {
+  background: var(--superficie);
+}
+
+.pasta-selecao-musica input {
+  accent-color: var(--marca);
+}
+
+.pasta-selecao-acoes {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--borda);
+  color: var(--texto-suave);
+  font-size: 10px;
+}
+
+.texto-apoio {
+  margin: 0;
+  color: var(--texto-suave);
+  font-size: 11px;
+}
+
