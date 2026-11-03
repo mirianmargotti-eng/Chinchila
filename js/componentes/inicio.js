@@ -27,7 +27,7 @@ Object.assign(Componentes, {
 
     return `
       <section class="boas-vindas">
-        <div class="boas-vindas-mensagem"><h2>Um abraça bem apertado viu :D</h2></div>
+        <div class="boas-vindas-mensagem"><h2>Alguem já disse que você é incrível :D</h2></div>
         <img class="boas-vindas-imagem" src="assets/chinchila-boas-vindas.png" alt="Ilustração de uma chinchila usando chapéu e segurando uma flor.">
       </section>
       <section class="resumo-cards" aria-label="Resumo do acervo">
