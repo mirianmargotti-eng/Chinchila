@@ -1,5 +1,5 @@
 Object.assign(Componentes, {
-  telaInicio({ proximosRepertorios, proximosLembretes, favoritas, totalMusicas, totalPastas, totalCelebracoes }) {
+  telaInicio({ proximosRepertorios, proximosLembretes, favoritas, totalMusicas, totalPastas, totalRepertorios }) {
     const agendaProxima = [
       ...proximosRepertorios.map((roteiro) => ({ ...roteiro, tipo: "repertorio" })),
       ...proximosLembretes.map((lembrete) => ({ ...lembrete, tipo: "lembrete" })),
@@ -7,7 +7,7 @@ Object.assign(Componentes, {
       .sort((a, b) => a.data_evento.localeCompare(b.data_evento))
       .map(
         (evento) => `
-          <button class="agenda-resumo-item ${evento.tipo}" data-acao="${evento.tipo === "repertorio" ? "abrir-celebracao" : "navegar-agenda-data"}" ${evento.tipo === "repertorio" ? `data-id="${evento.id}"` : `data-data="${this.escapar(evento.data_evento)}"`}>
+          <button class="agenda-resumo-item ${evento.tipo}" data-acao="${evento.tipo === "repertorio" ? "abrir-repertorio" : "navegar-agenda-data"}" ${evento.tipo === "repertorio" ? `data-id="${evento.id}"` : `data-data="${this.escapar(evento.data_evento)}"`}>
             <span class="agenda-resumo-icone">${this.icone(evento.tipo === "repertorio" ? "list" : "sparkle")}</span>
             <span class="item-detalhe"><strong>${this.escapar(evento.titulo)}</strong><small>${this.formatarData(evento.data_evento)}${evento.tipo === "repertorio" ? ` · ${this.contagemRegressiva(evento.data_evento)}` : evento.descricao ? ` · ${this.escapar(evento.descricao)}` : " · Lembrete"}</small></span>
             ${this.icone("chevron")}
@@ -33,7 +33,7 @@ Object.assign(Componentes, {
       <section class="resumo-cards" aria-label="Resumo do acervo">
         <article class="resumo-card"><span class="resumo-icone azul">${this.icone("music")}</span><span><small>Músicas cadastradas</small><strong>${totalMusicas}</strong></span></article>
         <article class="resumo-card"><span class="resumo-icone violeta">${this.icone("folder")}</span><span><small>Pastas</small><strong>${totalPastas}</strong></span></article>
-        <article class="resumo-card"><span class="resumo-icone verde">${this.icone("list")}</span><span><small>Repertórios</small><strong>${totalCelebracoes}</strong></span></article>
+        <article class="resumo-card"><span class="resumo-icone verde">${this.icone("list")}</span><span><small>Repertórios</small><strong>${totalRepertorios}</strong></span></article>
       </section>
       <section class="painel">
         <div class="secao-cabecalho"><div><h2>Agenda desta semana</h2><p>Seus repertórios e lembretes nos próximos 7 dias.</p></div><button class="link-botao" data-acao="navegar" data-tela="agenda">Abrir agenda ${this.icone("chevron")}</button></div>

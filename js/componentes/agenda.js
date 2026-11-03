@@ -26,8 +26,8 @@ Object.assign(Componentes, {
         (repertorio) => `
           <article class="agenda-evento repertorio">
             <span class="agenda-evento-icone">${this.icone("list")}</span>
-            <button class="agenda-evento-detalhe" data-acao="abrir-celebracao" data-id="${repertorio.id}"><strong>${this.escapar(repertorio.titulo)}</strong><small>Repertório agendado</small></button>
-            <button class="botao-icone" data-acao="abrir-celebracao" data-id="${repertorio.id}" aria-label="Abrir repertório ${this.escapar(repertorio.titulo)}">${this.icone("chevron")}</button>
+            <button class="agenda-evento-detalhe" data-acao="abrir-repertorio" data-id="${repertorio.id}"><strong>${this.escapar(repertorio.titulo)}</strong><small>Repertório agendado</small></button>
+            <button class="botao-icone" data-acao="abrir-repertorio" data-id="${repertorio.id}" aria-label="Abrir repertório ${this.escapar(repertorio.titulo)}">${this.icone("chevron")}</button>
           </article>`
       )
       .join("");

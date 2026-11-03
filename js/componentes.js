@@ -43,7 +43,7 @@ const Componentes = {
         links: [
           { id: "musicas", rotulo: "Músicas", icone: "music" },
           { id: "pastas", rotulo: "Pastas", icone: "folder" },
-          { id: "celebracoes", rotulo: "Repertórios", icone: "list" },
+          { id: "repertorios", rotulo: "Repertórios", icone: "list" },
         ],
       },
       { titulo: "AGENDA", links: [{ id: "agenda", rotulo: "Agenda", icone: "calendar" }] },

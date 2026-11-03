@@ -3,7 +3,7 @@ const App = {
   params: {},
   buscaMusicas: "",
   buscaPastas: "",
-  buscaCelebracoes: "",
+  buscaRepertorios: "",
   pastaFiltro: "",
   paginaMusicas: 1,
   musicasPorPagina: 6,
@@ -133,7 +133,7 @@ const App = {
     let dadosPalco = null;
 
     if (this.tela === "inicio") {
-      const repertoriosProximos = this.proximosSeteDias(Banco.listarCelebracoes());
+      const repertoriosProximos = this.proximosSeteDias(Banco.listarRepertorios());
       const lembretesProximos = this.proximosSeteDias(Banco.listarLembretes());
       html = Componentes.telaInicio({
         proximosRepertorios: repertoriosProximos,
@@ -141,7 +141,7 @@ const App = {
         favoritas: Banco.listarMusicas({ apenasFixadas: true }),
         totalMusicas: Banco.listarMusicas().length,
         totalPastas: Banco.listarPastas().length,
-        totalCelebracoes: Banco.listarCelebracoes().length,
+        totalRepertorios: Banco.listarRepertorios().length,
       });
     } else if (this.tela === "musicas") {
       titulo = "Músicas";
@@ -190,46 +190,46 @@ const App = {
         metronomoAtivo: this.metronomoAtivo,
         bpm: this.metronomoBpm,
       });
-    } else if (this.tela === "celebracoes") {
+    } else if (this.tela === "repertorios") {
       titulo = "Repertórios";
       descricao = "Monte sequências flexíveis para apresentações e eventos.";
-      acaoCriar = "nova-celebracao";
+      acaoCriar = "nova-repertorio";
       rotuloCriar = "Novo repertório";
-      telaAtiva = "celebracoes";
-      html = Componentes.telaCelebracoes({
-        celebracoes: Banco.listarCelebracoes().filter((celebracao) =>
-          celebracao.titulo.toLowerCase().includes(this.buscaCelebracoes.trim().toLowerCase())
+      telaAtiva = "repertorios";
+      html = Componentes.telaRepertorios({
+        repertorios: Banco.listarRepertorios().filter((repertorio) =>
+          repertorio.titulo.toLowerCase().includes(this.buscaRepertorios.trim().toLowerCase())
         ),
-        busca: this.buscaCelebracoes,
+        busca: this.buscaRepertorios,
       });
-    } else if (this.tela === "celebracao-form") {
+    } else if (this.tela === "repertorio-form") {
       titulo = this.params.id ? "Editar repertório" : "Novo repertório";
       descricao = "Organize os momentos e as músicas da sua sequência.";
-      telaAtiva = "celebracoes";
-      const celebracao = this.params.id ? Banco.obterCelebracao(this.params.id) : null;
-      html = Componentes.formularioCelebracao({
-        celebracao,
-        itens: celebracao ? Banco.listarItens(celebracao.id) : [],
+      telaAtiva = "repertorios";
+      const repertorio = this.params.id ? Banco.obterRepertorio(this.params.id) : null;
+      html = Componentes.formularioRepertorio({
+        repertorio,
+        itens: repertorio ? Banco.listarItens(repertorio.id) : [],
         musicas: Banco.listarMusicas(),
         momentos: Banco.momentosPadrao(),
         dataInicial: this.params.data_evento,
         retornoAgenda: Boolean(this.params.retornoAgenda),
       });
     } else if (this.tela === "simular") {
-      const celebracao = Banco.obterCelebracao(this.params.id);
-      if (!celebracao) return this.irPara("celebracoes");
-      const itens = Banco.listarItens(celebracao.id);
+      const repertorio = Banco.obterRepertorio(this.params.id);
+      if (!repertorio) return this.irPara("repertorios");
+      const itens = Banco.listarItens(repertorio.id);
       const item = itens[this.simularIndice] || null;
       const musica = item ? Banco.obterMusica(item.musica_id) : null;
       titulo = "Modo palco";
-      descricao = celebracao.titulo;
-      telaAtiva = "celebracoes";
+      descricao = repertorio.titulo;
+      telaAtiva = "repertorios";
       const cifra = musica
         ? Componentes.transporCifra(musica.corpo_cifra, musica.tom_original, this.tomAtual) ||
           "Esta música ainda não tem cifra cadastrada."
         : "";
       dadosPalco = {
-        celebracao,
+        repertorio,
         item,
         itens,
         musica,
@@ -302,7 +302,7 @@ const App = {
         },
         dias: this.diasDoMesAgenda(),
         selecionada: this.agendaSelecionada,
-        repertorios: Banco.listarCelebracoes().filter((repertorio) => repertorio.data_evento === this.agendaSelecionada),
+        repertorios: Banco.listarRepertorios().filter((repertorio) => repertorio.data_evento === this.agendaSelecionada),
         lembretes: Banco.listarLembretes().filter((lembrete) => lembrete.data_evento === this.agendaSelecionada),
         editorLembrete: this.params.novoLembrete
           ? {
@@ -391,7 +391,7 @@ const App = {
         this.irPara("agenda");
       },
       "agenda-criar-repertorio": () => {
-        this.irPara("celebracao-form", {
+        this.irPara("repertorio-form", {
           data_evento: this.agendaSelecionada,
           retornoAgenda: true,
         });
@@ -418,7 +418,7 @@ const App = {
         });
       },
       "voltar-agenda": () => {
-        const repertorio = this.params.id ? Banco.obterCelebracao(this.params.id) : null;
+        const repertorio = this.params.id ? Banco.obterRepertorio(this.params.id) : null;
         this.agendaSelecionada = repertorio
           ? repertorio.data_evento
           : this.params.data_evento || this.agendaSelecionada;
@@ -430,7 +430,7 @@ const App = {
         this.aplicarTema(Banco.obterTema() === "claro" ? "escuro" : "claro");
         this.renderizar();
       },
-      "sair-palco": () => this.irPara("celebracao-form", { id: this.params.id }),
+      "sair-palco": () => this.irPara("repertorio-form", { id: this.params.id }),
       "alternar-menu-palco": () => {
         this.sidebarPalcoAberta = !this.sidebarPalcoAberta;
         this.renderizar();
@@ -476,7 +476,7 @@ const App = {
           this.renderizar();
         });
       },
-      "abrir-celebracao": () => this.irPara("celebracao-form", { id }),
+      "abrir-repertorio": () => this.irPara("repertorio-form", { id }),
       "abrir-cifra": () => {
         const musica = Banco.obterMusica(id);
         this.tomAtual = musica ? musica.tom_original : "C";
@@ -514,34 +514,34 @@ const App = {
           this.renderizar();
         });
       },
-      "nova-celebracao": () => this.irPara("celebracao-form"),
-      "apagar-celebracao": () => {
+      "nova-repertorio": () => this.irPara("repertorio-form"),
+      "apagar-repertorio": () => {
         this.abrirDialogo({
           titulo: "Apagar repertório",
           mensagem: "Este repertório e sua sequência deixarão de ficar disponíveis.",
           confirmacao: "Apagar repertório",
           perigo: true,
         }, () => {
-          Banco.apagarCelebracao(id);
+          Banco.apagarRepertorio(id);
           this.renderizar();
         });
       },
-      "clonar-celebracao": () => {
-        const copia = Banco.clonarCelebracao(id);
-        if (copia) this.irPara("celebracao-form", { id: copia.id });
+      "clonar-repertorio": () => {
+        const copia = Banco.clonarRepertorio(id);
+        if (copia) this.irPara("repertorio-form", { id: copia.id });
       },
       "adicionar-item": () => {
-        const celebracaoId = id || this.params.id;
-        if (!celebracaoId) return;
-        const ordem = Banco.listarItens(celebracaoId).length + 1;
+        const repertorioId = id || this.params.id;
+        if (!repertorioId) return;
+        const ordem = Banco.listarItens(repertorioId).length + 1;
         Banco.salvarItem({
-          celebracao_id: celebracaoId,
+          repertorio_id: repertorioId,
           posicao_ordem: ordem,
           nome_momento: "Novo momento",
           musica_id: null,
           nota_adicional: "",
         });
-        this.irPara("celebracao-form", { id: celebracaoId });
+        this.irPara("repertorio-form", { id: repertorioId });
       },
       "apagar-item": () => {
         this.abrirDialogo({
@@ -551,7 +551,7 @@ const App = {
           perigo: true,
         }, () => {
           Banco.apagarItem(id);
-          this.irPara("celebracao-form", { id: this.params.id });
+          this.irPara("repertorio-form", { id: this.params.id });
         });
       },
       "mover-item": () => {
@@ -746,8 +746,8 @@ const App = {
       this.irPara("musicas");
     }
 
-    if (form.dataset.acao === "salvar-celebracao") {
-      const salva = Banco.salvarCelebracao({
+    if (form.dataset.acao === "salvar-repertorio") {
+      const salva = Banco.salvarRepertorio({
         id: dados.get("id"),
         titulo: dados.get("titulo"),
         data_evento: dados.get("data_evento"),
@@ -756,7 +756,7 @@ const App = {
       if (!dados.get("id")) {
         Banco.momentosPadrao().forEach((nome_momento, indice) => {
           Banco.salvarItem({
-            celebracao_id: salva.id,
+            repertorio_id: salva.id,
             posicao_ordem: indice + 1,
             nome_momento,
             musica_id: null,
@@ -766,7 +766,7 @@ const App = {
       }
       const retornoAgenda = dados.get("retorno_agenda") === "true";
       if (retornoAgenda) this.agendaSelecionada = salva.data_evento;
-      this.irPara("celebracao-form", { id: salva.id, retornoAgenda });
+      this.irPara("repertorio-form", { id: salva.id, retornoAgenda });
     }
 
     if (form.dataset.acao === "salvar-momentos-padrao") {
@@ -811,8 +811,8 @@ const App = {
       this.renderizar();
     }
 
-    if (form.dataset.acao === "filtrar-celebracoes") {
-      this.buscaCelebracoes = String(dados.get("busca") || "");
+    if (form.dataset.acao === "filtrar-repertorios") {
+      this.buscaRepertorios = String(dados.get("busca") || "");
       this.renderizar();
     }
   },

@@ -2,11 +2,11 @@ const Banco = {
   chave: "chinchila.v1",
 
   estado: {
-    sequencias: { pastas: 1, musicas: 1, celebracoes: 1, itens_celebracao: 1, lembretes: 1 },
+    sequencias: { pastas: 1, musicas: 1, repertorios: 1, itens_repertorio: 1, lembretes: 1 },
     pastas: [],
     musicas: [],
-    celebracoes: [],
-    itens_celebracao: [],
+    repertorios: [],
+    itens_repertorio: [],
     lembretes: [],
     config: {
       tema: "claro",
@@ -34,6 +34,40 @@ const Banco = {
       } catch (erro) {
         throw new Error("Não foi possível ler os dados locais do Chinchila. Os dados foram preservados.", { cause: erro });
       }
+      const sequenciasLegadas = { ...(dados.sequencias || {}) };
+      const repertoriosSalvos = Array.isArray(dados.repertorios)
+        ? dados.repertorios
+        : Array.isArray(dados.celebracoes)
+          ? dados.celebracoes
+          : [];
+      const itensSalvos = Array.isArray(dados.itens_repertorio)
+        ? dados.itens_repertorio
+        : Array.isArray(dados.itens_celebracao)
+          ? dados.itens_celebracao
+          : [];
+      dados = {
+        ...dados,
+        repertorios: repertoriosSalvos,
+        itens_repertorio: itensSalvos.map((item) => {
+          if (!item || typeof item !== "object") return item;
+          const { celebracao_id: idLegado, ...itemAtualizado } = item;
+          if (itemAtualizado.repertorio_id == null && idLegado != null) {
+            itemAtualizado.repertorio_id = idLegado;
+          }
+          return itemAtualizado;
+        }),
+        sequencias: sequenciasLegadas,
+      };
+      if (sequenciasLegadas.repertorios == null && sequenciasLegadas.celebracoes != null) {
+        sequenciasLegadas.repertorios = sequenciasLegadas.celebracoes;
+      }
+      if (sequenciasLegadas.itens_repertorio == null && sequenciasLegadas.itens_celebracao != null) {
+        sequenciasLegadas.itens_repertorio = sequenciasLegadas.itens_celebracao;
+      }
+      delete sequenciasLegadas.celebracoes;
+      delete sequenciasLegadas.itens_celebracao;
+      delete dados.celebracoes;
+      delete dados.itens_celebracao;
       this.estado = { ...this.estado, ...dados };
       this.estado.sequencias = { ...this.estado.sequencias, ...(dados.sequencias || {}) };
       this.estado.lembretes = Array.isArray(dados.lembretes) ? dados.lembretes : [];
@@ -75,11 +109,11 @@ const Banco = {
   },
 
   _seed() {
-    this.estado.sequencias = { pastas: 1, musicas: 1, celebracoes: 1, itens_celebracao: 1, lembretes: 1 };
+    this.estado.sequencias = { pastas: 1, musicas: 1, repertorios: 1, itens_repertorio: 1, lembretes: 1 };
     this.estado.pastas = [];
     this.estado.musicas = [];
-    this.estado.celebracoes = [];
-    this.estado.itens_celebracao = [];
+    this.estado.repertorios = [];
+    this.estado.itens_repertorio = [];
     this.estado.lembretes = [];
   },
 
@@ -134,7 +168,7 @@ const Banco = {
         .map((demo) => demo.id)
     );
 
-    const celebracoesDemo = [
+    const repertoriosDemo = [
       {
         id: 1,
         titulo: "Celebração 1",
@@ -158,20 +192,20 @@ const Banco = {
         ],
       },
     ];
-    const idsCelebracoesRemovidas = new Set(
-      celebracoesDemo
+    const idsRepertoriosRemovidos = new Set(
+      repertoriosDemo
         .filter((demo) =>
-          this.estado.celebracoes.some((celebracao) => {
+          this.estado.repertorios.some((repertorio) => {
             if (
-              celebracao.id !== demo.id ||
-              celebracao.titulo !== demo.titulo ||
-              !celebracao.atualizado_em ||
-              !String(celebracao.atualizado_em).startsWith(celebracao.data_evento)
+              repertorio.id !== demo.id ||
+              repertorio.titulo !== demo.titulo ||
+              !repertorio.atualizado_em ||
+              !String(repertorio.atualizado_em).startsWith(repertorio.data_evento)
             ) {
               return false;
             }
-            const itens = this.estado.itens_celebracao
-              .filter((item) => item.celebracao_id === demo.id)
+            const itens = this.estado.itens_repertorio
+              .filter((item) => item.repertorio_id === demo.id)
               .sort((a, b) => a.id - b.id);
             return (
               itens.length === demo.itens.length &&
@@ -190,16 +224,16 @@ const Banco = {
         )
         .map((demo) => demo.id)
     );
-    this.estado.celebracoes = this.estado.celebracoes.filter(
-      (celebracao) => !idsCelebracoesRemovidas.has(celebracao.id)
+    this.estado.repertorios = this.estado.repertorios.filter(
+      (repertorio) => !idsRepertoriosRemovidos.has(repertorio.id)
     );
-    this.estado.itens_celebracao = this.estado.itens_celebracao.filter(
-      (item) => !idsCelebracoesRemovidas.has(item.celebracao_id)
+    this.estado.itens_repertorio = this.estado.itens_repertorio.filter(
+      (item) => !idsRepertoriosRemovidos.has(item.repertorio_id)
     );
     this.estado.musicas = this.estado.musicas.filter(
       (musica) => !idsMusicasRemovidas.has(musica.id)
     );
-    this.estado.itens_celebracao.forEach((item) => {
+    this.estado.itens_repertorio.forEach((item) => {
       if (idsMusicasRemovidas.has(item.musica_id)) item.musica_id = null;
     });
 

@@ -42,7 +42,7 @@ Tabela associativa que permite organizar a mesma música em várias pastas.
 
 A chave primária composta (`musica_id`, `pasta_id`) evita repetir a mesma associação. A exclusão de uma pasta remove somente seus vínculos nesta tabela; não exclui as músicas. A exclusão de uma música remove seus vínculos com todas as pastas.
 
-## 4. Tabela: `celebracoes`
+## 4. Tabela: `repertorio`
 Armazena os roteiros criados. Todo roteiro é dinâmico e reutilizável por padrão; o usuário pode alterar músicas da semana passada para gerar a celebração ou show de hoje.
 
 | Campo | Tipo | Descrição |
@@ -51,13 +51,13 @@ Armazena os roteiros criados. Todo roteiro é dinâmico e reutilizável por padr
 | `titulo` | TEXT NOT NULL | Nome dado ao evento (ex: "Missa de Ramos", "Setlist Acústico Bar"); único campo obrigatório. |
 | `data_evento` | DATE NULL | Data agendada ou de realização do evento; opcional. |
 
-## 5. Tabela: `itens_celebracao`
+## 5. Tabela: `itens_repertorio`
 Tabela associativa que define a ordem das músicas e os momentos customizáveis de cada evento.
 
 | Campo | Tipo | Descrição |
 | :--- | :--- | :--- |
 | `id` | INTEGER (PK) | Identificador do item da linha. |
-| `celebracao_id` | INTEGER (FK) | Vínculo com a tabela `celebracoes`. |
+| `repertorio_id` | INTEGER (FK) | Vínculo com a tabela `repertorio`. |
 | `posicao_ordem` | INTEGER | Índice da ordem de execução (1, 2, 3...). |
 | `nome_momento` | TEXT | Nome do momento ou bloco (totalmente editável, ex: "Entrada da Bíblia", "Setlist Noite"). |
 | `musica_id` | INTEGER (FK, NULL) | Vínculo opcional com `musicas`; a música não é obrigatória. |
@@ -79,7 +79,7 @@ Armazena anotações e lembretes associados a uma data da agenda. Repertórios n
 
 - Música: somente `titulo`.
 - Pasta: somente `nome`.
-- Repertório (`celebracoes`): somente `titulo`.
+- Repertório (`repertorio`): somente `titulo`.
 - O vínculo de uma música a uma pasta e a associação de uma música a um momento do repertório são opcionais.
 
 Os demais campos da música podem ficar vazios no cadastro, permitindo registrar uma música como lembrete para completar a cifra depois.

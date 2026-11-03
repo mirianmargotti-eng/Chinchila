@@ -1,39 +1,39 @@
 Object.assign(Componentes, {
-  telaCelebracoes({ celebracoes, busca }) {
-    const cards = celebracoes
+  telaRepertorios({ repertorios, busca }) {
+    const cards = repertorios
       .map(
-        (celebracao) => `
+        (repertorio) => `
           <article class="roteiro-card">
-            <button class="roteiro-abre" data-acao="abrir-celebracao" data-id="${celebracao.id}">
+            <button class="roteiro-abre" data-acao="abrir-repertorio" data-id="${repertorio.id}">
               <span class="item-icone violeta">${this.icone("list")}</span>
-              <span class="item-detalhe"><strong>${this.escapar(celebracao.titulo)}</strong><small>${this.icone("calendar")} ${this.formatarData(celebracao.data_evento)}${celebracao.local ? ` · ${this.escapar(celebracao.local)}` : ""}</small></span>
+              <span class="item-detalhe"><strong>${this.escapar(repertorio.titulo)}</strong><small>${this.icone("calendar")} ${this.formatarData(repertorio.data_evento)}${repertorio.local ? ` · ${this.escapar(repertorio.local)}` : ""}</small></span>
               ${this.icone("chevron")}
             </button>
             <div class="acoes-linha">
-              <button class="botao-icone" data-acao="simular" data-id="${celebracao.id}" aria-label="Simular ${this.escapar(celebracao.titulo)}" title="Modo palco">${this.icone("play")}</button>
-              <button class="botao-icone" data-acao="abrir-celebracao" data-id="${celebracao.id}" aria-label="Editar ${this.escapar(celebracao.titulo)}" title="Editar">${this.icone("edit")}</button>
-              <button class="botao-icone" data-acao="clonar-celebracao" data-id="${celebracao.id}" aria-label="Clonar ${this.escapar(celebracao.titulo)}" title="Clonar repertório">${this.icone("list")}</button>
-              <button class="botao-icone perigo" data-acao="apagar-celebracao" data-id="${celebracao.id}" aria-label="Apagar ${this.escapar(celebracao.titulo)}" title="Apagar">${this.icone("trash")}</button>
+              <button class="botao-icone" data-acao="simular" data-id="${repertorio.id}" aria-label="Simular ${this.escapar(repertorio.titulo)}" title="Modo palco">${this.icone("play")}</button>
+              <button class="botao-icone" data-acao="abrir-repertorio" data-id="${repertorio.id}" aria-label="Editar ${this.escapar(repertorio.titulo)}" title="Editar">${this.icone("edit")}</button>
+              <button class="botao-icone" data-acao="clonar-repertorio" data-id="${repertorio.id}" aria-label="Clonar ${this.escapar(repertorio.titulo)}" title="Clonar repertório">${this.icone("list")}</button>
+              <button class="botao-icone perigo" data-acao="apagar-repertorio" data-id="${repertorio.id}" aria-label="Apagar ${this.escapar(repertorio.titulo)}" title="Apagar">${this.icone("trash")}</button>
             </div>
           </article>`
       )
       .join("");
 
     return `
-      <form class="busca-form busca-rota" data-acao="filtrar-celebracoes">
+      <form class="busca-form busca-rota" data-acao="filtrar-repertorios">
         ${this.icone("search")}<input name="busca" type="search" placeholder="Buscar repertório..." value="${this.escapar(busca)}" aria-label="Buscar repertório">
       </form>
       <section class="painel roteiro-painel">
-        <div class="tabela-resumo"><span>${celebracoes.length} ${celebracoes.length === 1 ? "repertório" : "repertórios"}</span><span>Apresentações e eventos</span></div>
-        <div class="roteiros-lista">${cards || this.estadoVazio("list", busca ? "Nenhum repertório encontrado" : "Nenhum repertório cadastrado", busca ? "Tente buscar por outro nome." : "Monte uma sequência para sua próxima apresentação.", busca ? null : { acao: "nova-celebracao", rotulo: "Criar repertório" })}</div>
+        <div class="tabela-resumo"><span>${repertorios.length} ${repertorios.length === 1 ? "repertório" : "repertórios"}</span><span>Apresentações e eventos</span></div>
+        <div class="roteiros-lista">${cards || this.estadoVazio("list", busca ? "Nenhum repertório encontrado" : "Nenhum repertório cadastrado", busca ? "Tente buscar por outro nome." : "Monte uma sequência para sua próxima apresentação.", busca ? null : { acao: "nova-repertorio", rotulo: "Criar repertório" })}</div>
       </section>
     `;
   },
 
-  formularioCelebracao({ celebracao, itens, musicas, momentos, dataInicial, retornoAgenda }) {
+  formularioRepertorio({ repertorio, itens, musicas, momentos, dataInicial, retornoAgenda }) {
     const hoje = new Date();
     const hojeISO = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, "0")}-${String(hoje.getDate()).padStart(2, "0")}`;
-    const c = celebracao || { titulo: "", data_evento: dataInicial || hojeISO };
+    const c = repertorio || { titulo: "", data_evento: dataInicial || hojeISO };
     const sugestoes = momentos.map((nome) => `<option value="${this.escapar(nome)}"></option>`).join("");
     const linhas = itens
       .map(
@@ -49,7 +49,7 @@ Object.assign(Componentes, {
             </div></div>
             <div class="campos-duplos">
               <label>Nome do momento<input list="momentos-padrao" data-campo="nome_momento" data-id="${item.id}" value="${this.escapar(item.nome_momento)}" placeholder="Ex.: Entrada"></label>
-              <div class="campo-musica"><label>Música</label><span class="momento-musica-selecionada" data-musica-selecionada="${item.id}">${this.escapar(musicaSelecionada ? musicaSelecionada.titulo : "Nenhuma música selecionada")}</span>${repeticoes > 1 && celebracao ? `<small class="momento-musica-aviso">${this.icone("info")} Música em ${repeticoes} momentos.</small>` : ""}<input type="search" class="momento-busca-musica" data-acao="buscar-musica-momento" data-id="${item.id}" autocomplete="off" placeholder="Buscar por título ou autor..." aria-label="Buscar música para o momento ${item.posicao_ordem}"><div class="momento-busca-resultados" hidden></div></div>
+              <div class="campo-musica"><label>Música</label><span class="momento-musica-selecionada" data-musica-selecionada="${item.id}">${this.escapar(musicaSelecionada ? musicaSelecionada.titulo : "Nenhuma música selecionada")}</span>${repeticoes > 1 && repertorio ? `<small class="momento-musica-aviso">${this.icone("info")} Música em ${repeticoes} momentos.</small>` : ""}<input type="search" class="momento-busca-musica" data-acao="buscar-musica-momento" data-id="${item.id}" autocomplete="off" placeholder="Buscar por título ou autor..." aria-label="Buscar música para o momento ${item.posicao_ordem}"><div class="momento-busca-resultados" hidden></div></div>
               <label class="campo-largo">Observação<input data-campo="nota_adicional" data-id="${item.id}" value="${this.escapar(item.nota_adicional || "")}" placeholder="Uma observação para este momento (opcional)"></label>
             </div>
           </article>`;
@@ -59,7 +59,7 @@ Object.assign(Componentes, {
 
     return `
       <section class="painel formulario-painel">
-        <form class="formulario" data-acao="salvar-celebracao">
+        <form class="formulario" data-acao="salvar-repertorio">
           <input type="hidden" name="id" value="${c.id || ""}">
           <input type="hidden" name="retorno_agenda" value="${retornoAgenda ? "true" : "false"}">
           <div class="campos-duplos">
@@ -68,10 +68,10 @@ Object.assign(Componentes, {
             <label class="campo-local"><span>Local <small>(opcional)</small></span><input name="local" maxlength="80" value="${this.escapar(c.local || "")}" placeholder="Ex.: Igreja do Centro"></label>
           </div>
           <div class="acoes-form">
-            ${retornoAgenda ? `<button type="button" class="botao secundario" data-acao="voltar-agenda">${this.icone("arrowLeft")} Voltar à agenda</button>` : `<button type="button" class="botao secundario" data-acao="navegar" data-tela="celebracoes">Voltar</button>`}
+            ${retornoAgenda ? `<button type="button" class="botao secundario" data-acao="voltar-agenda">${this.icone("arrowLeft")} Voltar à agenda</button>` : `<button type="button" class="botao secundario" data-acao="navegar" data-tela="repertorios">Voltar</button>`}
             <button type="submit" class="botao primario">Salvar repertório</button>
             ${c.id ? `<button type="button" class="botao contorno" data-acao="simular" data-id="${c.id}">${this.icone("play")} Imersão </button>` : ""}
-            ${c.id ? `<button type="button" class="botao contorno" data-acao="clonar-celebracao" data-id="${c.id}">${this.icone("list")} Clonar repertório</button>` : ""}
+            ${c.id ? `<button type="button" class="botao contorno" data-acao="clonar-repertorio" data-id="${c.id}">${this.icone("list")} Clonar repertório</button>` : ""}
           </div>
         </form>
       </section>
@@ -96,7 +96,7 @@ Object.assign(Componentes, {
       </button>`).join("");
   },
 
-  telaSimular({ celebracao, itens, musicas, indice, tomAtual }) {
+  telaSimular({ repertorio, itens, musicas, indice, tomAtual }) {
     const item = itens[indice];
     const musica = item ? musicas.find((m) => m.id === item.musica_id) : null;
     const nav = itens
@@ -113,8 +113,8 @@ Object.assign(Componentes, {
 
     return `
       <section class="modo-palco">
-        <aside class="palco-lateral"><button class="link-botao" data-acao="abrir-celebracao" data-id="${celebracao.id}">${this.icone("arrowLeft")} Voltar ao repertório</button><h2>${this.escapar(celebracao.titulo)}</h2><p>SEQUÊNCIA</p><nav>${nav || `<span class="texto-apoio">Adicione momentos ao repertório para usar o modo palco.</span>`}</nav></aside>
-        <div class="palco-conteudo"><div class="palco-cabecalho"><div><span class="sobrelinha">${item ? `MOMENTO ${indice + 1} DE ${itens.length}` : "MODO PALCO"}</span><h2>${this.escapar(item ? item.nome_momento : celebracao.titulo)}</h2><p>${this.escapar(musica ? musica.titulo : item && item.nota_adicional ? item.nota_adicional : "")}</p></div>${musica ? `<div class="tom-barra"><span>Tom</span><div><button class="botao secundario" data-acao="transpor" data-delta="-1" aria-label="Baixar tom">−</button><strong>${this.escapar(tomAtual)}</strong><button class="botao secundario" data-acao="transpor" data-delta="1" aria-label="Subir tom">+</button></div></div>` : ""}</div>${corpo}</div>
+        <aside class="palco-lateral"><button class="link-botao" data-acao="abrir-repertorio" data-id="${repertorio.id}">${this.icone("arrowLeft")} Voltar ao repertório</button><h2>${this.escapar(repertorio.titulo)}</h2><p>SEQUÊNCIA</p><nav>${nav || `<span class="texto-apoio">Adicione momentos ao repertório para usar o modo palco.</span>`}</nav></aside>
+        <div class="palco-conteudo"><div class="palco-cabecalho"><div><span class="sobrelinha">${item ? `MOMENTO ${indice + 1} DE ${itens.length}` : "MODO PALCO"}</span><h2>${this.escapar(item ? item.nome_momento : repertorio.titulo)}</h2><p>${this.escapar(musica ? musica.titulo : item && item.nota_adicional ? item.nota_adicional : "")}</p></div>${musica ? `<div class="tom-barra"><span>Tom</span><div><button class="botao secundario" data-acao="transpor" data-delta="-1" aria-label="Baixar tom">−</button><strong>${this.escapar(tomAtual)}</strong><button class="botao secundario" data-acao="transpor" data-delta="1" aria-label="Subir tom">+</button></div></div>` : ""}</div>${corpo}</div>
       </section>
     `;
   },

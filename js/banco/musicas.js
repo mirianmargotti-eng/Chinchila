@@ -66,7 +66,7 @@ Object.assign(Banco, {
   apagarMusica(id) {
     const num = Number(id);
     this.estado.musicas = this.estado.musicas.filter((m) => m.id !== num);
-    this.estado.itens_celebracao.forEach((item) => {
+    this.estado.itens_repertorio.forEach((item) => {
       if (item.musica_id === num) item.musica_id = null;
     });
     this.gravar();

@@ -1,5 +1,5 @@
 Object.assign(Componentes, {
-  layoutPalco({ celebracao, item, musica, itens, indice, tomAtual, corpo, sidebarAberta, infoAberta, comentarioId }) {
+  layoutPalco({ repertorio, item, musica, itens, indice, tomAtual, corpo, sidebarAberta, infoAberta, comentarioId }) {
     const sequencia = itens
       .map((linha, i) => {
         const faixa = linha.musica_id ? Banco.obterMusica(linha.musica_id) : null;
@@ -24,7 +24,7 @@ Object.assign(Componentes, {
           <div class="palco-topbar-esquerda">
             <button class="botao-icone palco-menu-botao" data-acao="alternar-menu-palco" aria-label="${sidebarAberta ? "Fechar sequência" : "Abrir sequência"}" aria-expanded="${sidebarAberta}">${this.icone("menu")}</button>
             <button class="botao-icone palco-info-botao" data-acao="alternar-info-palco" aria-label="${infoAberta ? "Ocultar informações" : "Mostrar informações"}" aria-expanded="${infoAberta}">${this.icone("info")}</button>
-            <div class="palco-topbar-titulo"><span><i class="palco-status-ponto"></i>${this.escapar(celebracao.titulo)}</span><strong>${item ? `${indice + 1}. ${this.escapar(nomeMomento)}${musica ? ` — ${this.escapar(musica.titulo)}` : ""}` : "Nenhum momento na sequência"}</strong></div>
+            <div class="palco-topbar-titulo"><span><i class="palco-status-ponto"></i>${this.escapar(repertorio.titulo)}</span><strong>${item ? `${indice + 1}. ${this.escapar(nomeMomento)}${musica ? ` — ${this.escapar(musica.titulo)}` : ""}` : "Nenhum momento na sequência"}</strong></div>
           </div>
           <div class="palco-topbar-acoes">
             ${musica && autor ? `<span class="palco-autor">${this.icone("user")}${this.escapar(autor)}</span>` : ""}

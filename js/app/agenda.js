@@ -28,7 +28,7 @@ Object.assign(App, {
     const repertoriosPorData = new Map();
     const lembretesPorData = new Map();
 
-    Banco.listarCelebracoes().forEach((repertorio) => {
+    Banco.listarRepertorios().forEach((repertorio) => {
       if (!repertoriosPorData.has(repertorio.data_evento)) repertoriosPorData.set(repertorio.data_evento, []);
       repertoriosPorData.get(repertorio.data_evento).push(repertorio);
     });
