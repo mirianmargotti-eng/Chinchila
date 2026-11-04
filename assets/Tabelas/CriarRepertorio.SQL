@@ -1,0 +1,7 @@
+CREATE TABLE repertorios (
+    repertorio_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    titulo TEXT NOT NULL,
+    data_evento TEXT,
+    data_criacao TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    atualizado_em TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
