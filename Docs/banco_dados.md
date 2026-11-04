@@ -12,12 +12,16 @@ Um novo dispositivo precisará de conexão e do serviço de nuvem disponível pa
 
 ## Tabelas locais
 
+## Convenção de nomenclatura
+
+Os nomes dos arquivos SQL servem para identificar o assunto ou a operação do script; não determinam o nome do objeto criado. O nome efetivo da tabela é o declarado em `CREATE TABLE` e segue a convenção de plural, enquanto os nomes das colunas ficam no singular, pois cada coluna representa um atributo de um registro. Assim, por exemplo, `usuarios.nome` representa o nome de um usuário.
+
 ## 1. Tabela: `pastas`
 Permite segmentar as músicas em coleções separadas (ex: Religioso, Pop, Sertanejo, Internacional).
 
 | Campo | Tipo | Descrição |
 | :--- | :--- | :--- |
-| `id` | INTEGER (PK) | Identificador único da pasta. |
+| `pasta_id` | INTEGER (PK) | Identificador único da pasta. |
 | `nome` | TEXT NOT NULL | Nome descritivo da pasta; único campo obrigatório. |
 
 ## 2. Tabela: `musicas`
@@ -25,55 +29,64 @@ Armazena o acervo completo de canções do usuário.
 
 | Campo | Tipo | Descrição |
 | :--- | :--- | :--- |
-| `id` | INTEGER (PK) | Identificador único da música. |
+| `musica_id` | INTEGER (PK) | Identificador único da música. |
 | `titulo` | TEXT NOT NULL | Nome da canção; único campo obrigatório. |
 | `autor` | TEXT NULL | Compositor ou intérprete (opcional). |
 | `tom_original` | TEXT NULL | Tom padrão da cifra (ex: G, Ebm); opcional. |
 | `corpo_cifra` | TEXT NULL | Letra e acordes; opcional, inclusive para cadastrar uma música para cifrar depois. |
-| `is_fixada` | BOOLEAN NOT NULL DEFAULT 0 | Define se aparece no "Modo Pânico" da Home (`0` ou `1`); opcional no cadastro. |
+| `is_fixada` | INTEGER NOT NULL DEFAULT 0 | Define se aparece no "Modo Pânico" da Home (`0` ou `1`); opcional no cadastro. |
 
 ## 3. Tabela: `musicas_pastas`
 Tabela associativa que permite organizar a mesma música em várias pastas.
 
 | Campo | Tipo | Descrição |
 | :--- | :--- | :--- |
-| `musica_id` | INTEGER (parte da PK composta, FK) | Vínculo com `musicas`. |
-| `pasta_id` | INTEGER (parte da PK composta, FK) | Vínculo com `pastas`. |
+| `musica_pasta_id` | INTEGER (PK) | Identificador do vínculo. |
+| `musica_id` | INTEGER (FK) | Vínculo com `musicas`. |
+| `pasta_id` | INTEGER (FK) | Vínculo com `pastas`. |
 
-A chave primária composta (`musica_id`, `pasta_id`) evita repetir a mesma associação. A exclusão de uma pasta remove somente seus vínculos nesta tabela; não exclui as músicas. A exclusão de uma música remove seus vínculos com todas as pastas.
+Uma restrição `UNIQUE (pasta_id, musica_id)` evita repetir a mesma associação. Ao excluir uma pasta ou música, seus vínculos nesta tabela são removidos; os demais registros permanecem.
 
-## 4. Tabela: `repertorio`
+## 4. Tabela: `repertorios`
 Armazena os roteiros criados. Todo roteiro é dinâmico e reutilizável por padrão; o usuário pode alterar músicas da semana passada para gerar a celebração ou show de hoje.
 
 | Campo | Tipo | Descrição |
 | :--- | :--- | :--- |
-| `id` | INTEGER (PK) | Identificador único do roteiro/evento. |
+| `repertorio_id` | INTEGER (PK) | Identificador único do roteiro/evento. |
 | `titulo` | TEXT NOT NULL | Nome dado ao evento (ex: "Missa de Ramos", "Setlist Acústico Bar"); único campo obrigatório. |
-| `data_evento` | DATE NULL | Data agendada ou de realização do evento; opcional. |
+| `data_evento` | TEXT NULL | Data agendada ou de realização do evento em `AAAA-MM-DD`; opcional. |
 
 ## 5. Tabela: `itens_repertorio`
 Tabela associativa que define a ordem das músicas e os momentos customizáveis de cada evento.
 
 | Campo | Tipo | Descrição |
 | :--- | :--- | :--- |
-| `id` | INTEGER (PK) | Identificador do item da linha. |
-| `repertorio_id` | INTEGER (FK) | Vínculo com a tabela `repertorio`. |
-| `posicao_ordem` | INTEGER | Índice da ordem de execução (1, 2, 3...). |
+| `item_repertorio_id` | INTEGER (PK) | Identificador do item da linha. |
+| `repertorio_id` | INTEGER (FK) | Vínculo com a tabela `repertorios`. |
+| `posicao_ordem` | INTEGER NOT NULL | Índice da ordem de execução (1, 2, 3...). |
 | `nome_momento` | TEXT | Nome do momento ou bloco (totalmente editável, ex: "Entrada da Bíblia", "Setlist Noite"). |
 | `musica_id` | INTEGER (FK, NULL) | Vínculo opcional com `musicas`; a música não é obrigatória. |
 | `nota_adicional` | TEXT NULL | Observações específicas para este dia (ex: "Entrar após o sino"); opcional. |
 
-Se uma música for excluída, os itens de repertório deixam de apontar para ela (`musica_id` fica nulo), mas o momento, a ordem e as observações são preservados. Assim, excluir a música não apaga nem desestrutura o repertório.
+Uma restrição única por repertório e posição impede posições duplicadas. Se uma música for excluída, os itens de repertório deixam de apontar para ela (`musica_id` fica nulo), mas o momento, a ordem e as observações são preservados. Ao excluir um repertório, seus itens também são removidos.
 
 ## 6. Tabela: `lembretes`
 Armazena anotações e lembretes associados a uma data da agenda. Repertórios não são duplicados nesta tabela: sua própria `data_evento` os vincula automaticamente ao calendário.
 
 | Campo | Tipo | Descrição |
 | :--- | :--- | :--- |
-| `id` | INTEGER (PK) | Identificador único do lembrete. |
+| `lembrete_id` | INTEGER (PK) | Identificador único do lembrete. |
 | `titulo` | TEXT NOT NULL | Título ou anotação curta do lembrete. |
 | `descricao` | TEXT NULL | Observação opcional. |
-| `data_evento` | DATE NOT NULL | Data em que o lembrete aparece na agenda. |
+| `data_evento` | TEXT NOT NULL | Data em que o lembrete aparece na agenda, no formato `AAAA-MM-DD`. |
+
+## 7. Tabelas: `usuarios` e `configuracao_usuarios`
+
+`usuarios` identifica o perfil local ao qual as preferências pertencem; não armazena senha nem credenciais de login. A autenticação da futura sincronização será responsabilidade de um provedor de identidade.
+
+`configuracao_usuarios` guarda uma configuração por usuário, incluindo `tema_padrao` (`0` ou `1`) e `fonte_texto` (`chinchila`, `arial` ou `times_new_roman`). Ao excluir um usuário, sua configuração é removida.
+
+As tabelas também guardam `data_criacao` e `atualizado_em`, com valores iniciais definidos por `CURRENT_TIMESTAMP`. A aplicação deve atualizar `atualizado_em` quando alterar um registro; o valor padrão não é aplicado novamente em atualizações.
 
 ## Campos obrigatórios
 
