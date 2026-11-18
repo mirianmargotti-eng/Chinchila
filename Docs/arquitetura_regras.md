@@ -13,7 +13,7 @@ O email será usado para identificar e acessar a conta de sincronização, mas n
 
 Quando vários dispositivos fizerem alterações off-line nos mesmos dados, será necessário sincronizá-las quando a conexão voltar. A regra para resolver conflitos ainda precisa ser definida antes da implementação da sincronização.
 
-**Estado atual do projeto:** o protótipo ainda é uma aplicação web e usa `localStorage`. O empacotamento com Capacitor, o SQLite local e a sincronização opcional são decisões de arquitetura e ainda não estão implementados.
+**Estado atual do projeto:** a interface continua preparada para Vite/Capacitor e já possui SQLite local integrado ao fluxo de dados. Os dados existentes em `localStorage` podem ser migrados automaticamente na primeira abertura. A sincronização opcional ainda não está implementada.
 
 ---
 

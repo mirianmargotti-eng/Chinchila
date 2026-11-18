@@ -3,7 +3,7 @@
 O **Chinchila** é um aplicativo focado na organização e execução de repertórios musicais, projetado especificamente para rodar de forma **Off-line First**. Inicialmente concebido para ajudar a transição de pastas físicas e livros de música para o digital de forma simples e intuitiva (ideal para utilizadores com pouca familiaridade tecnológica), o sistema expandiu-se para permitir também uma gestão flexível por pastas de géneros musicais (Pop, Sertanejo, Internacional, etc.) e roteiros totalmente editáveis para apresentações ou celebrações litúrgicas.
 
 ## 🚀 Funcionalidades Principais
-*   **Aplicativo Android local-first:** A direção definida é empacotar a interface atual com Capacitor e usar SQLite local. O app deverá funcionar sem internet ou dependência de servidor; a sincronização em nuvem será opcional para compartilhar e recuperar o acervo entre dispositivos. A implementação ainda está pendente.
+*   **Aplicativo Android local-first:** a interface já está preparada para Capacitor e usa SQLite local no dispositivo. Os dados legados em `localStorage` são migrados na primeira abertura; a sincronização em nuvem continua pendente.
 *   **Conta identificada por email:** O email dará acesso à conta, mas não será o armazenamento dos dados. A conta deverá manter um identificador próprio para permitir trocar o email sem perder o acervo.
 *   **Organização por Pastas:** Separação limpa de músicas por géneros, categorias ou preferências para evitar misturar repertórios distintos.
 *   **Módulo Música:** Biblioteca paginada, clonagem de músicas com suas cifras, importação de PDF/texto público, impressão e exportação para PDF pelo navegador.

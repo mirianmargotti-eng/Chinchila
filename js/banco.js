@@ -25,8 +25,64 @@ const Banco = {
     },
   },
 
-  iniciar() {
+  async iniciar() {
+    if (window.dbService) {
+      await window.dbService.iniciar();
+    }
+
     const salvo = localStorage.getItem(this.chave);
+    const jaMigrado = localStorage.getItem("chinchila.sqlite.migrado.v1") === "true";
+
+    if (window.dbService) {
+      const estadoSqlite = await window.dbService.carregarEstadoCompleto();
+      const temDadosSqlite =
+        estadoSqlite.pastas.length ||
+        estadoSqlite.musicas.length ||
+        estadoSqlite.repertorios.length ||
+        estadoSqlite.lembretes.length ||
+        estadoSqlite.config;
+
+      if (salvo && !jaMigrado) {
+        let dadosLegados = null;
+        try {
+          dadosLegados = JSON.parse(salvo);
+        } catch (erro) {
+          throw new Error("Não foi possível ler os dados locais do Chinchila. Os dados foram preservados.", { cause: erro });
+        }
+        const dadosPreparados = this.prepararDadosLegados(dadosLegados);
+        await window.dbService.sincronizarEstadoCompleto(dadosPreparados);
+        localStorage.setItem("chinchila.sqlite.migrado.v1", "true");
+        this.estado = dadosPreparados;
+        this.gravar();
+        return;
+      }
+
+      if (temDadosSqlite) {
+        this.estado.pastas = estadoSqlite.pastas;
+        this.estado.musicas = estadoSqlite.musicas;
+        this.estado.repertorios = estadoSqlite.repertorios;
+        this.estado.itens_repertorio = estadoSqlite.itens_repertorio;
+        this.estado.lembretes = estadoSqlite.lembretes;
+        if (estadoSqlite.config) {
+          this.estado.config = {
+            ...this.estado.config,
+            ...estadoSqlite.config,
+            perfil: {
+              ...this.estado.config.perfil,
+              ...(estadoSqlite.config.perfil || {}),
+            },
+            momentosPadrao:
+              Array.isArray(estadoSqlite.config.momentosPadrao) &&
+              estadoSqlite.config.momentosPadrao.length
+                ? estadoSqlite.config.momentosPadrao
+                : this.estado.config.momentosPadrao,
+          };
+        }
+        this.gravar();
+        return;
+      }
+    }
+
     if (salvo) {
       let dados;
       try {
@@ -96,6 +152,77 @@ const Banco = {
 
   gravar() {
     localStorage.setItem(this.chave, JSON.stringify(this.estado));
+    if (window.dbService) {
+      this.persistenciaSQLite = (this.persistenciaSQLite || Promise.resolve())
+        .catch(() => {})
+        .then(() => window.dbService.sincronizarEstadoCompleto(this.estado));
+    }
+  },
+
+  prepararDadosLegados(dados) {
+    const sequenciasLegadas = { ...(dados.sequencias || {}) };
+    const repertoriosSalvos = Array.isArray(dados.repertorios)
+      ? dados.repertorios
+      : Array.isArray(dados.celebracoes)
+        ? dados.celebracoes
+        : [];
+    const itensSalvos = Array.isArray(dados.itens_repertorio)
+      ? dados.itens_repertorio
+      : Array.isArray(dados.itens_celebracao)
+        ? dados.itens_celebracao
+        : [];
+    const dadosPreparados = {
+      ...this.estado,
+      ...dados,
+      repertorios: repertoriosSalvos,
+      itens_repertorio: itensSalvos.map((item) => {
+        if (!item || typeof item !== "object") return item;
+        const { celebracao_id: idLegado, ...itemAtualizado } = item;
+        if (itemAtualizado.repertorio_id == null && idLegado != null) {
+          itemAtualizado.repertorio_id = idLegado;
+        }
+        return itemAtualizado;
+      }),
+      sequencias: {
+        ...(this.estado.sequencias || {}),
+        ...(sequenciasLegadas || {}),
+      },
+    };
+
+    if (dadosPreparados.sequencias.repertorios == null && dadosPreparados.sequencias.celebracoes != null) {
+      dadosPreparados.sequencias.repertorios = dadosPreparados.sequencias.celebracoes;
+    }
+    if (dadosPreparados.sequencias.itens_repertorio == null && dadosPreparados.sequencias.itens_celebracao != null) {
+      dadosPreparados.sequencias.itens_repertorio = dadosPreparados.sequencias.itens_celebracao;
+    }
+    delete dadosPreparados.sequencias.celebracoes;
+    delete dadosPreparados.sequencias.itens_celebracao;
+    delete dadosPreparados.celebracoes;
+    delete dadosPreparados.itens_celebracao;
+    dadosPreparados.lembretes = Array.isArray(dadosPreparados.lembretes)
+      ? dadosPreparados.lembretes
+      : [];
+    dadosPreparados.config = {
+      ...this.estado.config,
+      ...(dados.config || {}),
+      perfil: {
+        ...this.estado.config.perfil,
+        ...(dados.config && dados.config.perfil ? dados.config.perfil : {}),
+      },
+      momentosPadrao: Array.isArray(
+        dados.config && dados.config.momentosPadrao
+          ? dados.config.momentosPadrao
+          : this.estado.config.momentosPadrao
+      )
+        ? (dados.config && dados.config.momentosPadrao
+            ? dados.config.momentosPadrao
+            : this.estado.config.momentosPadrao)
+        : [],
+    };
+
+    this.estado = dadosPreparados;
+    this._removerDadosDemonstracao();
+    return this.estado;
   },
 
   _id(tabela) {

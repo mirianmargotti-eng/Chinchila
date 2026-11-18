@@ -99,6 +99,7 @@ Object.assign(App, {
           x: item.transform[4],
           y: item.transform[5],
           texto: item.str,
+          largura: Math.abs(item.width || 0),
         }))
         .sort((a, b) => b.y - a.y || a.x - b.x);
       const linhas = [];
@@ -119,7 +120,32 @@ Object.assign(App, {
           .map((linha) => {
               let texto = "";
               let proximaColuna = 0;
-              linha.itens.forEach((item, indice) => {
+              const itensUnicos = [];
+              linha.itens.forEach((item) => {
+                const duplicado = itensUnicos.some((existente) => {
+                  if (
+                    existente.texto !== item.texto ||
+                    Math.abs(existente.y - item.y) > 2
+                  ) {
+                    return false;
+                  }
+
+                  const larguraMinima = Math.min(existente.largura, item.largura);
+                  const inicioSobreposicao = Math.max(existente.x, item.x);
+                  const fimSobreposicao = Math.min(
+                    existente.x + existente.largura,
+                    item.x + item.largura
+                  );
+                  const sobreposicao = fimSobreposicao - inicioSobreposicao;
+
+                  return larguraMinima > 0
+                    ? sobreposicao / larguraMinima >= 0.65
+                    : Math.abs(existente.x - item.x) <= 1.5;
+                });
+                if (!duplicado) itensUnicos.push(item);
+              });
+
+              itensUnicos.forEach((item) => {
                 const coluna = Math.max(
                   proximaColuna,
                   Math.round((item.x - xBase) / colunaPdf)

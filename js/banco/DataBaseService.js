@@ -12,7 +12,7 @@ import musicasPastasSQL from '../../assets/Tabelas/MusicaPasta.SQL?raw';
 import itensRepertorioSQL from '../../assets/Tabelas/ItensRepertorio.SQL?raw';
 
 const NOME_BANCO = 'chinchila';
-const VERSAO_BANCO = 2;
+const VERSAO_BANCO = 3;
 const ENTIDADES_SINCRONIZAVEIS = new Set([
   'configuracao_usuarios',
   'itens_repertorio',
@@ -56,6 +56,15 @@ const MIGRACOES = [
         ON fila_sincronizacao (enfileirado_em);`,
     ],
   },
+  {
+    toVersion: 3,
+    statements: [
+      `ALTER TABLE pastas ADD COLUMN capa TEXT NOT NULL DEFAULT '';`,
+      `ALTER TABLE repertorios ADD COLUMN local TEXT;`,
+      `ALTER TABLE usuarios ADD COLUMN email TEXT;`,
+      `ALTER TABLE configuracao_usuarios ADD COLUMN momentos_padrao TEXT;`,
+    ],
+  },
 ];
 
 class DatabaseService {
@@ -63,6 +72,7 @@ class DatabaseService {
     this.sqliteConnection = null;
     this.db = null;
     this.initializationPromise = null;
+    this.transacaoAtiva = false;
   }
 
   iniciar() {
@@ -122,7 +132,7 @@ class DatabaseService {
 
   async executar(sql, valores = []) {
     this._verificarConexao();
-    return this.db.run(sql, valores);
+    return this.db.run(sql, valores, !this.transacaoAtiva);
   }
 
   async executarTransacao(operacao) {
@@ -132,9 +142,11 @@ class DatabaseService {
     }
 
     await this.db.beginTransaction();
+    this.transacaoAtiva = true;
     try {
       const resultado = await operacao(this);
       await this.db.commitTransaction();
+      this.transacaoAtiva = false;
       return resultado;
     } catch (error) {
       try {
@@ -144,6 +156,8 @@ class DatabaseService {
           [error, erroRollback],
           'A operação e o rollback da transação falharam.'
         );
+      } finally {
+        this.transacaoAtiva = false;
       }
       throw error;
     }
@@ -210,6 +224,188 @@ class DatabaseService {
       'DELETE FROM fila_sincronizacao WHERE fila_sincronizacao_id = ?;',
       [id]
     );
+  }
+
+  async sincronizarEstadoCompleto(estado) {
+    this._verificarConexao();
+
+    await this.executarTransacao(async (servico) => {
+      await servico.executar('DELETE FROM itens_repertorio;');
+      await servico.executar('DELETE FROM musicas_pastas;');
+      await servico.executar('DELETE FROM lembretes;');
+      await servico.executar('DELETE FROM repertorios;');
+      await servico.executar('DELETE FROM musicas;');
+      await servico.executar('DELETE FROM pastas;');
+
+      for (const pasta of estado.pastas || []) {
+        await servico.executar(
+          `INSERT INTO pastas (pasta_id, nome, capa)
+           VALUES (?, ?, ?);`,
+          [pasta.id, pasta.nome, pasta.capa || '']
+        );
+      }
+
+      for (const musica of estado.musicas || []) {
+        await servico.executar(
+          `INSERT INTO musicas
+           (musica_id, titulo, autor, tom_original, corpo_cifra, is_fixada)
+           VALUES (?, ?, ?, ?, ?, ?);`,
+          [
+            musica.id,
+            musica.titulo,
+            musica.autor || null,
+            musica.tom_original || null,
+            musica.corpo_cifra || null,
+            musica.is_fixada ? 1 : 0,
+          ]
+        );
+        for (const pastaId of new Set(musica.pasta_ids || (musica.pasta_id ? [musica.pasta_id] : []))) {
+          await servico.executar(
+            `INSERT OR IGNORE INTO musicas_pastas (musica_id, pasta_id)
+             VALUES (?, ?);`,
+            [musica.id, Number(pastaId)]
+          );
+        }
+      }
+
+      for (const repertorio of estado.repertorios || []) {
+        await servico.executar(
+          `INSERT INTO repertorios (repertorio_id, titulo, data_evento, local)
+           VALUES (?, ?, ?, ?);`,
+          [
+            repertorio.id,
+            repertorio.titulo,
+            repertorio.data_evento || null,
+            repertorio.local || null,
+          ]
+        );
+      }
+
+      for (const item of estado.itens_repertorio || []) {
+        await servico.executar(
+          `INSERT INTO itens_repertorio
+           (item_repertorio_id, repertorio_id, posicao_ordem, nome_momento, musica_id, nota_adicional)
+           VALUES (?, ?, ?, ?, ?, ?);`,
+          [
+            item.id,
+            item.repertorio_id,
+            item.posicao_ordem,
+            item.nome_momento || null,
+            item.musica_id || null,
+            item.nota_adicional || null,
+          ]
+        );
+      }
+
+      for (const lembrete of estado.lembretes || []) {
+        await servico.executar(
+          `INSERT INTO lembretes
+           (lembrete_id, titulo, descricao, data_evento)
+           VALUES (?, ?, ?, ?);`,
+          [lembrete.id, lembrete.titulo, lembrete.descricao || null, lembrete.data_evento]
+        );
+      }
+
+      await servico.executar(
+        `INSERT OR REPLACE INTO usuarios (usuario_id, nome, email)
+         VALUES (1, ?, ?);`,
+        [estado.config?.perfil?.nome || 'Meu perfil', estado.config?.perfil?.email || null]
+      );
+
+      await servico.executar(
+        `INSERT OR REPLACE INTO configuracao_usuarios
+         (configuracao_usuario_id, usuario_id, tema_padrao, fonte_texto, momentos_padrao)
+         VALUES (1, 1, ?, ?, ?);`,
+        [
+          estado.config?.tema === 'escuro' ? 1 : 0,
+          estado.config?.fonteTexto === 'times'
+            ? 'times_new_roman'
+            : estado.config?.fonteTexto === 'arial'
+              ? 'arial'
+              : 'chinchila',
+          JSON.stringify(estado.config?.momentosPadrao || []),
+        ]
+      );
+    });
+  }
+
+  async carregarEstadoCompleto() {
+    this._verificarConexao();
+
+    const pastas = await this.consultar(
+      'SELECT pasta_id AS id, nome, capa FROM pastas ORDER BY pasta_id;'
+    );
+    const musicas = await this.consultar(
+      'SELECT musica_id AS id, titulo, autor, tom_original, corpo_cifra, is_fixada FROM musicas ORDER BY musica_id;'
+    );
+    const vinculos = await this.consultar(
+      'SELECT musica_id, pasta_id FROM musicas_pastas ORDER BY musica_pasta_id;'
+    );
+    const repertorios = await this.consultar(
+      'SELECT repertorio_id AS id, titulo, data_evento, local FROM repertorios ORDER BY repertorio_id;'
+    );
+    const itensRepertorio = await this.consultar(
+      `SELECT item_repertorio_id AS id, repertorio_id, posicao_ordem,
+              nome_momento, musica_id, nota_adicional
+       FROM itens_repertorio ORDER BY repertorio_id, posicao_ordem;`
+    );
+    const lembretes = await this.consultar(
+      `SELECT lembrete_id AS id, titulo, descricao, data_evento
+       FROM lembretes ORDER BY data_evento, lembrete_id;`
+    );
+    const usuarios = await this.consultar(
+      'SELECT usuario_id, nome, email FROM usuarios WHERE usuario_id = 1;'
+    );
+    const configuracoes = await this.consultar(
+      'SELECT tema_padrao, fonte_texto, momentos_padrao FROM configuracao_usuarios WHERE usuario_id = 1;'
+    );
+
+    const estadoMusicas = musicas.map((musica) => {
+      const pastaIds = vinculos
+        .filter((vinculo) => vinculo.musica_id === musica.id)
+        .map((vinculo) => vinculo.pasta_id);
+      return {
+        ...musica,
+        is_fixada: Boolean(musica.is_fixada),
+        pasta_ids: pastaIds,
+        pasta_id: pastaIds[0] || null,
+        atualizado_em: null,
+      };
+    });
+
+    let config = null;
+    if (configuracoes.length > 0) {
+      let momentosPadrao = [];
+      try {
+        momentosPadrao = JSON.parse(configuracoes[0].momentos_padrao || '[]');
+      } catch {
+        momentosPadrao = [];
+      }
+      const usuario = usuarios[0] || {};
+      const fonte = configuracoes[0].fonte_texto;
+      config = {
+        tema: configuracoes[0].tema_padrao ? 'escuro' : 'claro',
+        fonteTexto: fonte === 'times_new_roman'
+          ? 'times'
+          : fonte === 'arial'
+            ? 'arial'
+            : 'padrao',
+        perfil: {
+          nome: usuario.nome || 'Meu perfil',
+          email: usuario.email || '',
+        },
+        momentosPadrao,
+      };
+    }
+
+    return {
+      pastas,
+      musicas: estadoMusicas,
+      repertorios,
+      itens_repertorio: itensRepertorio,
+      lembretes,
+      config,
+    };
   }
 }
 

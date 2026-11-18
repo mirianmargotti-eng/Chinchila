@@ -1,0 +1,38 @@
+{
+  "name": "chinchila",
+  "version": "1.0.0",
+  "description": "O **Chinchila** é um aplicativo focado na organização e execução de repertórios musicais, projetado especificamente para rodar de forma **Off-line First**. Inicialmente concebido para ajudar a transição de pastas físicas e livros de música para o digital de forma simples e intuitiva (ideal para utilizadores com pouca familiaridade tecnológica), o sistema expandiu-se para permitir também uma gestão flexível por pastas de géneros musicais (Pop, Sertanejo, Internacional, etc.) e roteiros totalmente editáveis para apresentações ou celebrações litúrgicas.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "vite",
+    "preview": "vite preview",
+    "build": "vite build",
+    "android:add": "npx cap add android",
+    "android:sync": "npm run build && npx cap sync android",
+    "android:open": "npx cap open android"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mirianmargotti-eng/Chinchila.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/mirianmargotti-eng/Chinchila/issues"
+  },
+  "homepage": "https://github.com/mirianmargotti-eng/Chinchila#readme",
+  "devDependencies": {
+    "@capacitor/android": "^8.6.2",
+    "@capacitor/cli": "^8.6.2",
+    "vite": "^8.3.5"
+  },
+  "dependencies": {
+    "@capacitor-community/sqlite": "^8.1.1",
+    "@capacitor/core": "^8.6.2",
+    "jeep-sqlite": "^2.8.0",
+    "sql.js": "1.11.0"
+  }
+}

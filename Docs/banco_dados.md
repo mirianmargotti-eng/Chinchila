@@ -8,7 +8,7 @@ O email identifica a conta, mas não armazena os dados. A conta deverá possuir 
 
 Um novo dispositivo precisará de conexão e do serviço de nuvem disponível para acessar a conta e baixar o acervo; depois disso, os dados locais poderão ser usados off-line. Se o serviço deixar de existir, os dados já baixados continuarão disponíveis nos dispositivos existentes, mas a sincronização e a recuperação em novos dispositivos não estarão disponíveis. Alterações feitas off-line em mais de um dispositivo precisarão ser conciliadas na sincronização. A estratégia de resolução de conflitos e os detalhes técnicos do serviço de nuvem ainda serão definidos.
 
-**Importante:** este é o esquema-alvo da arquitetura. O protótipo web atual ainda armazena os dados em `localStorage` (JSON sob a chave `chinchila.v1`); não há empacotamento Capacitor, implementação SQLite nem sincronização neste momento.
+**Estado da implementação:** o projeto já possui integração com SQLite via Capacitor para Android e com `jeep-sqlite` no navegador. Na primeira execução, os dados legados em `localStorage` são migrados para o banco local. No navegador, execute o app pelo Vite (`npm run dev`), que também disponibiliza o arquivo WebAssembly do SQLite em `/assets`; abrir `index.html` diretamente não inicializa o banco. A sincronização em nuvem ainda não está implementada.
 
 ## Tabelas locais
 
